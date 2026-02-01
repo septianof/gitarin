@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Minus, Plus, Trash2, ShoppingBag, Loader2, Lock, ChevronDown } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, Loader2, Lock, ChevronDown, MapPin, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getCart, updateCartItem, removeCartItem } from "@/app/actions/cart";
+import { BiteshipArea, BiteshipRate } from "@/lib/biteship";
 
 interface CartItem {
     id: string;
@@ -28,33 +29,6 @@ interface CartItem {
     };
 }
 
-interface Province {
-    province_id: string;
-    province: string;
-}
-
-interface City {
-    city_id: string;
-    city_name: string;
-    type: string;
-    postal_code: string;
-}
-
-interface ShippingService {
-    service: string;
-    description: string;
-    cost: {
-        value: number;
-        etd: string;
-    }[];
-}
-
-const COURIERS = [
-    { code: "jne", name: "JNE (Jalur Nugraha Ekakurir)" },
-    { code: "pos", name: "POS Indonesia" },
-    { code: "tiki", name: "TIKI (Titipan Kilat)" },
-];
-
 export default function KeranjangPage() {
     const router = useRouter();
     const { status } = useSession();
@@ -70,23 +44,21 @@ export default function KeranjangPage() {
     const [shippingForm, setShippingForm] = useState({
         recipientName: "",
         recipientPhone: "",
-        provinceId: "",
-        cityId: "",
+        areaId: "",
         postalCode: "",
         addressDetail: "",
-        courier: "",
-        service: "",
+        service: "", // Biteship returns full rate object, we store index or key
     });
 
-    // Location data
-    const [provinces, setProvinces] = useState<Province[]>([]);
-    const [cities, setCities] = useState<City[]>([]);
-    const [loadingProvinces, setLoadingProvinces] = useState(false);
-    const [loadingCities, setLoadingCities] = useState(false);
+    // Area Search state
+    const [areaQuery, setAreaQuery] = useState("");
+    const [areaResults, setAreaResults] = useState<BiteshipArea[]>([]);
+    const [selectedArea, setSelectedArea] = useState<BiteshipArea | null>(null);
+    const [isSearchingArea, setIsSearchingArea] = useState(false);
+    const [showAreaResults, setShowAreaResults] = useState(false);
 
     // Shipping cost
-    const [shippingServices, setShippingServices] = useState<ShippingService[]>([]);
-    const [shippingCost, setShippingCost] = useState(0);
+    const [shippingRates, setShippingRates] = useState<BiteshipRate[]>([]);
     const [loadingShipping, setLoadingShipping] = useState(false);
 
     // Redirect if not authenticated
@@ -115,48 +87,45 @@ export default function KeranjangPage() {
         }
     }, [status, fetchCart]);
 
-    // Fetch provinces
+    // Area Search Debounce & Fetch
     useEffect(() => {
-        const fetchProvinces = async () => {
-            setLoadingProvinces(true);
-            try {
-                const res = await fetch("/api/shipping/provinces");
-                const data = await res.json();
-                setProvinces(data.provinces || []);
-            } catch (error) {
-                console.error("Error fetching provinces:", error);
+        const timeoutId = setTimeout(async () => {
+            if (!areaQuery || areaQuery.length < 3) {
+                setAreaResults([]);
+                return;
             }
-            setLoadingProvinces(false);
-        };
-        fetchProvinces();
-    }, []);
 
-    // Fetch cities when province changes
-    useEffect(() => {
-        if (!shippingForm.provinceId) {
-            setCities([]);
-            return;
-        }
+            // Don't search if query matches selected area to avoid re-opening
+            if (selectedArea && areaQuery === selectedArea.name) return;
 
-        const fetchCities = async () => {
-            setLoadingCities(true);
+            setIsSearchingArea(true);
             try {
-                const res = await fetch(`/api/shipping/cities?province_id=${shippingForm.provinceId}`);
+                const res = await fetch(`/api/shipping/areas?query=${encodeURIComponent(areaQuery)}`);
                 const data = await res.json();
-                setCities(data.cities || []);
+                setAreaResults(data.areas || []);
+                setShowAreaResults(true);
             } catch (error) {
-                console.error("Error fetching cities:", error);
+                console.error("Error searching areas:", error);
             }
-            setLoadingCities(false);
-        };
-        fetchCities();
-    }, [shippingForm.provinceId]);
+            setIsSearchingArea(false);
+        }, 500);
 
-    // Calculate shipping when city and courier selected
+        return () => clearTimeout(timeoutId);
+    }, [areaQuery, selectedArea]);
+
+    // Select Area Handler
+    const handleSelectArea = (area: BiteshipArea) => {
+        setSelectedArea(area);
+        setShippingForm(prev => ({ ...prev, areaId: area.id, postalCode: area.postal_code.toString() }));
+        setAreaQuery(area.name);
+        setShowAreaResults(false);
+        setAreaResults([]);
+    };
+
+    // Calculate shipping when area chosen
     useEffect(() => {
-        if (!shippingForm.cityId || !shippingForm.courier || totalWeight === 0) {
-            setShippingServices([]);
-            setShippingCost(0);
+        if (!shippingForm.areaId || totalWeight === 0) {
+            setShippingRates([]);
             return;
         }
 
@@ -167,40 +136,27 @@ export default function KeranjangPage() {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        destination: shippingForm.cityId,
-                        weight: totalWeight,
-                        courier: shippingForm.courier,
+                        destinationAreaId: shippingForm.areaId,
                     }),
                 });
+
                 const data = await res.json();
-                if (data.result?.costs) {
-                    setShippingServices(data.result.costs);
-                    // Auto-select first service if none selected
-                    if (data.result.costs.length > 0 && !shippingForm.service) {
-                        setShippingForm((prev) => ({
-                            ...prev,
-                            service: data.result.costs[0].service,
-                        }));
-                        setShippingCost(data.result.costs[0].cost[0]?.value || 0);
-                    }
+
+                if (data.rates) {
+                    setShippingRates(data.rates);
+                    // Reset service selection
+                    setShippingForm(prev => ({ ...prev, service: "" }));
+                } else if (data.error) {
+                    toast.error(data.error);
                 }
             } catch (error) {
                 console.error("Error calculating shipping:", error);
+                toast.error("Gagal menghitung ongkir");
             }
             setLoadingShipping(false);
         };
         calculateShipping();
-    }, [shippingForm.cityId, shippingForm.courier, totalWeight, shippingForm.service]);
-
-    // Update shipping cost when service changes
-    useEffect(() => {
-        if (shippingForm.service && shippingServices.length > 0) {
-            const selectedService = shippingServices.find((s) => s.service === shippingForm.service);
-            if (selectedService?.cost[0]) {
-                setShippingCost(selectedService.cost[0].value);
-            }
-        }
-    }, [shippingForm.service, shippingServices]);
+    }, [shippingForm.areaId, totalWeight]);
 
     // Handle quantity update
     const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
@@ -240,56 +196,28 @@ export default function KeranjangPage() {
     // Handle form input change
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setShippingForm((prev) => {
-            const updated = { ...prev, [name]: value };
-            // Reset dependent fields
-            if (name === "provinceId") {
-                updated.cityId = "";
-                updated.postalCode = "";
-            }
-            if (name === "courier") {
-                updated.service = "";
-            }
-            return updated;
-        });
-    };
-
-    // Handle city change (also set postal code)
-    const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const cityId = e.target.value;
-        const selectedCity = cities.find((c) => c.city_id === cityId);
-        setShippingForm((prev) => ({
-            ...prev,
-            cityId,
-            postalCode: selectedCity?.postal_code || "",
-        }));
+        setShippingForm((prev) => ({ ...prev, [name]: value }));
     };
 
     // Handle checkout
     const handleCheckout = () => {
-        // Validate form
-        if (!shippingForm.recipientName) {
-            toast.error("Nama penerima harus diisi");
+        if (!shippingForm.recipientName || !shippingForm.recipientPhone) {
+            toast.error("Lengkapi data penerima");
             return;
         }
-        if (!shippingForm.recipientPhone) {
-            toast.error("Nomor telepon harus diisi");
-            return;
-        }
-        if (!shippingForm.provinceId || !shippingForm.cityId) {
-            toast.error("Pilih provinsi dan kota/kabupaten");
+        if (!shippingForm.areaId) {
+            toast.error("Pilih area pengiriman");
             return;
         }
         if (!shippingForm.addressDetail) {
-            toast.error("Detail alamat harus diisi");
+            toast.error("Isi detail alamat");
             return;
         }
-        if (!shippingForm.courier || !shippingForm.service) {
-            toast.error("Pilih kurir dan layanan pengiriman");
+        if (!shippingForm.service) {
+            toast.error("Pilih layanan pengiriman");
             return;
         }
 
-        // For now, just show a placeholder
         toast.success("Fitur pembayaran akan segera hadir!");
     };
 
@@ -302,6 +230,9 @@ export default function KeranjangPage() {
         }).format(price);
     };
 
+    // Find selected rate logic
+    const selectedRate = shippingRates.find((_r, idx) => idx.toString() === shippingForm.service);
+    const shippingCost = selectedRate ? selectedRate.price : 0;
     const total = subtotal + shippingCost;
 
     if (status === "loading" || isLoading) {
@@ -430,28 +361,45 @@ export default function KeranjangPage() {
                                     />
                                 </div>
 
-                                {/* Province */}
-                                <div className="flex flex-col gap-1">
-                                    <Label className="text-sm font-medium">Provinsi</Label>
+                                {/* Area Search (Replaces Province/City) */}
+                                <div className="flex flex-col gap-1 relative z-20">
+                                    <Label className="text-sm font-medium">Kecamatan / Kota</Label>
                                     <div className="relative">
-                                        <select
-                                            name="provinceId"
-                                            value={shippingForm.provinceId}
-                                            onChange={handleInputChange}
-                                            disabled={loadingProvinces}
-                                            className="w-full h-11 appearance-none rounded-lg border border-gray-200 bg-white px-4 pr-10 text-sm focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900/20 focus:outline-none disabled:opacity-50"
-                                        >
-                                            <option value="">
-                                                {loadingProvinces ? "Memuat..." : "Pilih Provinsi"}
-                                            </option>
-                                            {provinces.map((p) => (
-                                                <option key={p.province_id} value={p.province_id}>
-                                                    {p.province}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                            {isSearchingArea ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                                        </div>
+                                        <Input
+                                            value={areaQuery}
+                                            onChange={(e) => {
+                                                setAreaQuery(e.target.value);
+                                                setShowAreaResults(true);
+                                                if (!e.target.value) {
+                                                    setShippingForm(prev => ({ ...prev, areaId: "" }));
+                                                    setSelectedArea(null);
+                                                }
+                                            }}
+                                            placeholder="Ketik Kecamatan / Kota..."
+                                            className="h-11 pl-10"
+                                        />
                                     </div>
+
+                                    {/* Area Results Dropdown */}
+                                    {showAreaResults && areaResults.length > 0 && (
+                                        <div className="absolute top-[72px] left-0 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50">
+                                            {areaResults.map((area) => (
+                                                <button
+                                                    key={area.id}
+                                                    onClick={() => handleSelectArea(area)}
+                                                    className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm border-b border-gray-50 last:border-0"
+                                                >
+                                                    <div className="font-medium text-zinc-900">{area.name}</div>
+                                                    <div className="text-xs text-gray-500">
+                                                        {area.administrative_division_level_2_name}, {area.administrative_division_level_1_name}
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Detail Address */}
@@ -482,30 +430,6 @@ export default function KeranjangPage() {
                                     />
                                 </div>
 
-                                {/* City */}
-                                <div className="flex flex-col gap-1">
-                                    <Label className="text-sm font-medium">Kota/Kabupaten</Label>
-                                    <div className="relative">
-                                        <select
-                                            name="cityId"
-                                            value={shippingForm.cityId}
-                                            onChange={handleCityChange}
-                                            disabled={!shippingForm.provinceId || loadingCities}
-                                            className="w-full h-11 appearance-none rounded-lg border border-gray-200 bg-white px-4 pr-10 text-sm focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900/20 focus:outline-none disabled:opacity-50"
-                                        >
-                                            <option value="">
-                                                {loadingCities ? "Memuat..." : "Pilih Kota/Kabupaten"}
-                                            </option>
-                                            {cities.map((c) => (
-                                                <option key={c.city_id} value={c.city_id}>
-                                                    {c.type} {c.city_name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                                    </div>
-                                </div>
-
                                 {/* Postal Code */}
                                 <div className="flex flex-col gap-1">
                                     <Label className="text-sm font-medium">Kode Pos</Label>
@@ -513,61 +437,40 @@ export default function KeranjangPage() {
                                         name="postalCode"
                                         value={shippingForm.postalCode}
                                         onChange={handleInputChange}
-                                        placeholder="Contoh: 12345"
-                                        className="h-11"
+                                        placeholder="Otomatis"
+                                        className="h-11 bg-gray-50"
+                                        readOnly
                                     />
                                 </div>
 
-                                {/* Courier */}
+                                {/* Service Selection */}
                                 <div className="flex flex-col gap-1">
-                                    <Label className="text-sm font-medium">Kurir Pengiriman</Label>
+                                    <Label className="text-sm font-medium">Pilih Pengiriman</Label>
                                     <div className="relative">
                                         <select
-                                            name="courier"
-                                            value={shippingForm.courier}
+                                            name="service"
+                                            value={shippingForm.service}
                                             onChange={handleInputChange}
-                                            disabled={!shippingForm.cityId}
+                                            disabled={!shippingForm.areaId || loadingShipping}
                                             className="w-full h-11 appearance-none rounded-lg border border-gray-200 bg-white px-4 pr-10 text-sm focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900/20 focus:outline-none disabled:opacity-50"
                                         >
-                                            <option value="">Pilih Kurir</option>
-                                            {COURIERS.map((c) => (
-                                                <option key={c.code} value={c.code}>
-                                                    {c.name}
+                                            <option value="">
+                                                {loadingShipping ? "Menghitung ongkir..." : shippingRates.length > 0 ? "Pilih Layanan" : "Isi alamat dulu"}
+                                            </option>
+                                            {shippingRates.map((rate, idx) => (
+                                                <option key={idx} value={idx.toString()}>
+                                                    {rate.courier_name} {rate.courier_service_name} ({rate.duration}) - {formatPrice(rate.price)}
                                                 </option>
                                             ))}
                                         </select>
                                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                                     </div>
+                                    {loadingShipping && (
+                                        <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                            <Loader2 className="w-3 h-3 animate-spin" /> Mencari kurir terbaik...
+                                        </p>
+                                    )}
                                 </div>
-
-                                {/* Service */}
-                                {shippingServices.length > 0 && (
-                                    <div className="flex flex-col gap-1">
-                                        <Label className="text-sm font-medium">Layanan Pengiriman</Label>
-                                        <div className="relative">
-                                            <select
-                                                name="service"
-                                                value={shippingForm.service}
-                                                onChange={handleInputChange}
-                                                className="w-full h-11 appearance-none rounded-lg border border-gray-200 bg-white px-4 pr-10 text-sm focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900/20 focus:outline-none"
-                                            >
-                                                {shippingServices.map((s) => (
-                                                    <option key={s.service} value={s.service}>
-                                                        {s.service} - {s.description} ({s.cost[0]?.etd || "-"} hari) - {formatPrice(s.cost[0]?.value || 0)}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {loadingShipping && (
-                                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                        Menghitung ongkos kirim...
-                                    </div>
-                                )}
                             </div>
                         </div>
                     </div>
