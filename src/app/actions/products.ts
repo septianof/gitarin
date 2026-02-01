@@ -142,3 +142,55 @@ export async function getProducts({
         };
     }
 }
+
+/**
+ * Get single product by slug
+ */
+export async function getProductBySlug(slug: string): Promise<ProductWithCategory | null> {
+    try {
+        const product = await prisma.product.findFirst({
+            where: {
+                slug,
+                deletedAt: null,
+            },
+            include: {
+                category: true,
+            },
+        });
+
+        return product as ProductWithCategory | null;
+    } catch (error) {
+        console.error("Error fetching product by slug:", error);
+        return null;
+    }
+}
+
+/**
+ * Get related products (same category, excluding current product)
+ */
+export async function getRelatedProducts(
+    categoryId: number,
+    excludeProductId: string,
+    limit: number = 4
+): Promise<ProductWithCategory[]> {
+    try {
+        const products = await prisma.product.findMany({
+            where: {
+                categoryId,
+                id: { not: excludeProductId },
+                deletedAt: null,
+                stock: { gt: 0 },
+            },
+            orderBy: { createdAt: "desc" },
+            take: limit,
+            include: {
+                category: true,
+            },
+        });
+
+        return products as ProductWithCategory[];
+    } catch (error) {
+        console.error("Error fetching related products:", error);
+        return [];
+    }
+}
