@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
+import { toast } from "sonner";
 import { Music, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,12 +15,10 @@ export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-    const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError("");
         setIsLoading(true);
 
         try {
@@ -30,7 +29,7 @@ export default function LoginPage() {
             });
 
             if (result?.error) {
-                setError(result.error);
+                toast.error(result.error);
                 setIsLoading(false);
                 return;
             }
@@ -52,9 +51,10 @@ export default function LoginPage() {
                 router.push("/");
             }
 
+            toast.success("Login berhasil! Selamat datang kembali.");
             router.refresh();
         } catch {
-            setError("Terjadi kesalahan. Silakan coba lagi.");
+            toast.error("Terjadi kesalahan. Silakan coba lagi.");
             setIsLoading(false);
         }
     };
@@ -81,11 +81,6 @@ export default function LoginPage() {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
-                        {error}
-                    </div>
-                )}
 
                 <div className="flex flex-col gap-2">
                     <Label htmlFor="email" className="text-sm font-semibold text-zinc-900">

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import { Music, User, Mail, Lock, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,6 @@ export default function RegisterPage() {
         password: "",
         confirmPassword: "",
     });
-    const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,19 +29,19 @@ export default function RegisterPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError("");
         setIsLoading(true);
 
         const result = await register(formData);
 
         if (!result.success) {
-            setError(result.error || "Terjadi kesalahan");
+            toast.error(result.error || "Terjadi kesalahan");
             setIsLoading(false);
             return;
         }
 
-        // Success - redirect to login
-        router.push("/login?registered=true");
+        // Success - show toast and redirect to login
+        toast.success("Registrasi berhasil! Silakan login.");
+        router.push("/login");
     };
 
     return (
@@ -66,11 +66,6 @@ export default function RegisterPage() {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
-                        {error}
-                    </div>
-                )}
 
                 {/* Name Field */}
                 <div className="flex flex-col gap-2">
