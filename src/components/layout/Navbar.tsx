@@ -5,7 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { toast } from "sonner";
-import { Search, ShoppingCart, Music, Menu, X, User, LogOut } from "lucide-react";
+import { Search, Music, Menu, X, User, LogOut } from "lucide-react";
+import { CartBadge } from "./CartBadge";
 
 export function Navbar() {
     const pathname = usePathname();
@@ -142,10 +143,7 @@ export function Navbar() {
 
                     {/* Right Actions */}
                     <div className="flex items-center gap-4">
-                        <button className="relative p-2 text-gray-500 hover:text-zinc-900 transition">
-                            <ShoppingCart className="w-6 h-6" />
-                            <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
-                        </button>
+                        <CartBadge />
 
                         {/* Auth Section */}
                         <div className="hidden md:flex items-center gap-3">

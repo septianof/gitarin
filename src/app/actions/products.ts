@@ -14,7 +14,8 @@ export interface GetProductsParams {
     search?: string;
 }
 
-export interface ProductWithCategory extends Product {
+export interface ProductWithCategory extends Omit<Product, "price"> {
+    price: string | number;
     category: Category;
 }
 
@@ -120,8 +121,14 @@ export async function getProducts({
             },
         });
 
+        // Convert Decimal to string
+        const safeProducts = products.map((p) => ({
+            ...p,
+            price: p.price.toString(),
+        }));
+
         return {
-            products: products as ProductWithCategory[],
+            products: safeProducts,
             totalCount,
             totalPages,
             currentPage: validPage,
@@ -158,7 +165,12 @@ export async function getProductBySlug(slug: string): Promise<ProductWithCategor
             },
         });
 
-        return product as ProductWithCategory | null;
+        if (!product) return null;
+
+        return {
+            ...product,
+            price: product.price.toString(),
+        };
     } catch (error) {
         console.error("Error fetching product by slug:", error);
         return null;
@@ -188,9 +200,13 @@ export async function getRelatedProducts(
             },
         });
 
-        return products as ProductWithCategory[];
+        return products.map((p) => ({
+            ...p,
+            price: p.price.toString(),
+        }));
     } catch (error) {
         console.error("Error fetching related products:", error);
         return [];
     }
 }
+

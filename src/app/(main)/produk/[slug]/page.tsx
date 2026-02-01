@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { getProductBySlug, getRelatedProducts } from "@/app/actions/products";
 import { ProductCard } from "@/components/product/ProductCard";
-import { Button } from "@/components/ui/button";
+import { AddToCartButton } from "@/components/product/AddToCartButton";
 
 interface ProductDetailPageProps {
     params: Promise<{ slug: string }>;
@@ -88,13 +88,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                         </div>
 
                         {/* Add to Cart Button */}
-                        <Button
-                            size="lg"
-                            className="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold h-14 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-                        >
-                            <ShoppingCart className="w-5 h-5" />
-                            Tambah ke Keranjang
-                        </Button>
+                        <AddToCartButton
+                            productId={product.id}
+                            productName={product.name}
+                            stock={product.stock}
+                            className="w-full h-14"
+                        />
                     </div>
                 </div>
 

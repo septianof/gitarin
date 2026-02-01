@@ -16,7 +16,8 @@ export type PopularCategory = Category & {
 /**
  * Type untuk produk unggulan dengan relasi kategori
  */
-export type FeaturedProduct = Product & {
+export type FeaturedProduct = Omit<Product, "price"> & {
+    price: string | number;
     category: Category;
 };
 
@@ -114,7 +115,11 @@ export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
             take: 4,
         });
 
-        return products;
+        // Convert Decimal to string
+        return products.map((p) => ({
+            ...p,
+            price: p.price.toString(),
+        }));
     } catch (error) {
         console.error("Error fetching featured products:", error);
         return [];
