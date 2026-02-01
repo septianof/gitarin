@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:15-alpine 
+    container_name: gitarin-db
+    restart: always
+    environment:
+      POSTGRES_USER: admin_gitar
+      POSTGRES_PASSWORD: password_gitar
+      POSTGRES_DB: db_gitarin
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
