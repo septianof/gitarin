@@ -3,14 +3,17 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Search, ShoppingCart, Music, Menu, X } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
+import { Search, ShoppingCart, Music, Menu, X, User, LogOut } from "lucide-react";
 
 export function Navbar() {
     const pathname = usePathname();
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { data: session, status } = useSession();
 
     const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
+    const [showUserMenu, setShowUserMenu] = useState(false);
     const isUserTyping = useRef(false);
     const lastSearched = useRef(searchParams.get("search") || "");
 
@@ -65,6 +68,12 @@ export function Navbar() {
         router.push("/produk?page=1");
     }, [router]);
 
+    const handleLogout = async () => {
+        await signOut({ redirect: false });
+        router.push("/");
+        router.refresh();
+    };
+
     const isActive = (path: string) => {
         if (path === "/" && pathname === "/") return true;
         if (path !== "/" && pathname.startsWith(path)) return true;
@@ -88,8 +97,8 @@ export function Navbar() {
                         <Link
                             href="/"
                             className={`font-medium transition ${isActive('/')
-                                    ? "text-zinc-900"
-                                    : "text-gray-500 hover:text-zinc-900"
+                                ? "text-zinc-900"
+                                : "text-gray-500 hover:text-zinc-900"
                                 }`}
                         >
                             Beranda
@@ -97,8 +106,8 @@ export function Navbar() {
                         <Link
                             href="/produk"
                             className={`font-medium transition ${isActive('/produk')
-                                    ? "text-zinc-900"
-                                    : "text-gray-500 hover:text-zinc-900"
+                                ? "text-zinc-900"
+                                : "text-gray-500 hover:text-zinc-900"
                                 }`}
                         >
                             Produk
@@ -136,19 +145,64 @@ export function Navbar() {
                             <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
                         </button>
 
+                        {/* Auth Section */}
                         <div className="hidden md:flex items-center gap-3">
-                            <Link
-                                href="/login"
-                                className="text-sm font-medium text-gray-500 hover:text-zinc-900 transition"
-                            >
-                                Masuk
-                            </Link>
-                            <Link
-                                href="/register"
-                                className="bg-zinc-900 hover:bg-zinc-800 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition shadow-lg shadow-gray-200"
-                            >
-                                Daftar
-                            </Link>
+                            {status === "loading" ? (
+                                <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+                            ) : session?.user ? (
+                                /* Logged In - Show Profile */
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setShowUserMenu(!showUserMenu)}
+                                        className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition"
+                                    >
+                                        <div className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center text-white font-semibold">
+                                            {session.user.name?.charAt(0).toUpperCase() || "U"}
+                                        </div>
+                                    </button>
+
+                                    {/* Dropdown Menu */}
+                                    {showUserMenu && (
+                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
+                                            <div className="px-4 py-2 border-b border-gray-100">
+                                                <p className="font-medium text-zinc-900 truncate">{session.user.name}</p>
+                                                <p className="text-xs text-gray-500 truncate">{session.user.email}</p>
+                                            </div>
+                                            <Link
+                                                href="/profil"
+                                                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                                onClick={() => setShowUserMenu(false)}
+                                            >
+                                                <User className="w-4 h-4" />
+                                                Profil Saya
+                                            </Link>
+                                            <button
+                                                onClick={handleLogout}
+                                                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                            >
+                                                <LogOut className="w-4 h-4" />
+                                                Keluar
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                /* Not Logged In - Show Login/Register */
+                                <>
+                                    <Link
+                                        href="/login"
+                                        className="text-sm font-medium text-gray-500 hover:text-zinc-900 transition"
+                                    >
+                                        Masuk
+                                    </Link>
+                                    <Link
+                                        href="/register"
+                                        className="bg-zinc-900 hover:bg-zinc-800 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition shadow-lg shadow-gray-200"
+                                    >
+                                        Daftar
+                                    </Link>
+                                </>
+                            )}
                         </div>
 
                         <button className="md:hidden p-2 text-gray-600">
@@ -157,6 +211,14 @@ export function Navbar() {
                     </div>
                 </div>
             </div>
+
+            {/* Click outside to close dropdown */}
+            {showUserMenu && (
+                <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowUserMenu(false)}
+                />
+            )}
         </nav>
     );
 }
