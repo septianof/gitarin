@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
-import { Music, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Music, Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,6 +61,15 @@ export default function LoginPage() {
 
     return (
         <div className="w-full max-w-[480px] mx-auto flex flex-col gap-8">
+            {/* Back to Home */}
+            <Link
+                href="/"
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-zinc-900 transition w-fit"
+            >
+                <ArrowLeft className="w-4 h-4" />
+                Kembali ke Beranda
+            </Link>
+
             {/* Mobile Logo */}
             <div className="lg:hidden flex items-center gap-3">
                 <div className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-900 text-white">
@@ -103,10 +112,12 @@ export default function LoginPage() {
                         <Label htmlFor="password" className="text-sm font-semibold text-zinc-900">
                             Password
                         </Label>
-                        {/* Lupa Password - disabled for now */}
-                        <span className="text-sm text-gray-400 cursor-not-allowed">
+                        <Link
+                            href="/lupa-password"
+                            className="text-sm text-gray-500 hover:text-zinc-900 transition"
+                        >
                             Lupa Password?
-                        </span>
+                        </Link>
                     </div>
                     <div className="relative">
                         <Input

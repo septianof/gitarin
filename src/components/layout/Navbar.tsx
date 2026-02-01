@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { toast } from "sonner";
 import { Search, ShoppingCart, Music, Menu, X, User, LogOut } from "lucide-react";
 
 export function Navbar() {
@@ -70,6 +71,7 @@ export function Navbar() {
 
     const handleLogout = async () => {
         await signOut({ redirect: false });
+        toast.success("Logout berhasil. Sampai jumpa lagi!");
         router.push("/");
         router.refresh();
     };
