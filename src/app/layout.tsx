@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
@@ -29,7 +30,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased text-gray-900`}
       >
-        <Navbar />
+        <Suspense fallback={<div className="h-20 bg-white border-b" />}>
+          <Navbar />
+        </Suspense>
         {children}
         <Footer />
       </body>

@@ -8,6 +8,7 @@ vi.mock("@/lib/prisma", () => ({
         },
         product: {
             findMany: vi.fn(),
+            count: vi.fn(),
         },
     },
 }));

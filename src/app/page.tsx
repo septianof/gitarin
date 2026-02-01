@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, ShoppingCart, Truck, CheckCircle, Headphones, Music } from "lucide-react";
+import { ProductCard } from "@/components/product/ProductCard";
 import { getPopularCategories, getFeaturedProducts } from "@/app/actions/landing-page";
 
 export default async function Home() {
@@ -69,7 +70,7 @@ export default async function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {popularCategories.map((category) => (
-              <Link href={`/kategori/${category.slug}`} key={category.id}>
+              <Link href={`/produk?categoryId=${category.id}`} key={category.id}>
                 <div className="relative group rounded-xl overflow-hidden h-64 shadow-md cursor-pointer">
                   {category.image ? (
                     <Image
@@ -114,34 +115,9 @@ export default async function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {featuredProducts.map((product) => (
-              <div key={product.id} className="group bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300">
-                <div className="relative h-64 bg-gray-100 flex items-center justify-center p-4">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    className="object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300 p-4"
-                  />
-                </div>
-                <div className="p-5">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{product.category.name}</p>
-                  <Link href={`/produk/${product.slug}`}>
-                    <h3 className="mt-1 text-lg font-bold text-zinc-900 truncate hover:text-gray-600 transition-colors">
-                      {product.name}
-                    </h3>
-                  </Link>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-xl font-bold text-zinc-900">
-                      Rp {Number(product.price).toLocaleString("id-ID")}
-                    </span>
-                    <button className="p-2 bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 transition shadow-md">
-                      <ShoppingCart className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
 
