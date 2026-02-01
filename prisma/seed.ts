@@ -116,7 +116,7 @@ async function main() {
         console.log('  ✓ Product:', p.name);
     }
 
-    // 6. Create 10 Orders
+    // 6. Create 15 Orders with Strategic Distribution
     console.log('\n📦 Creating orders...');
     const statuses: OrderStatus[] = [
         OrderStatus.PENDING,
@@ -126,39 +126,60 @@ async function main() {
         OrderStatus.DIBATALKAN
     ];
 
-    for (let i = 0; i < 10; i++) {
-        const status = statuses[Math.floor(i / 2)];
-        const order = await prisma.order.create({
-            data: {
-                userId: customers[i % 3].id,
-                totalAmount: 0,
-                status: status,
-            }
-        });
+    // Strategy: Create orders with different distribution per category
+    // - Gitar Akustik: 6 orders (most popular)
+    // - Gitar Elektrik: 5 orders (second)
+    // - Bass: 4 orders (third)
 
-        let total = 0;
-        for (let j = 0; j < 2; j++) {
-            const product = products[Math.floor(Math.random() * products.length)];
-            const qty = 1;
-            const productPrice = Number(product.price);
+    let orderCount = 0;
+    const orderDistribution = [
+        { categoryIdx: 0, count: 6, name: 'Gitar Akustik' },  // most popular
+        { categoryIdx: 1, count: 5, name: 'Gitar Elektrik' },
+        { categoryIdx: 2, count: 4, name: 'Bass' }
+    ];
 
-            await prisma.orderItem.create({
+    for (const dist of orderDistribution) {
+        for (let i = 0; i < dist.count; i++) {
+            const status = statuses[Math.floor(orderCount / 3) % statuses.length];
+            const order = await prisma.order.create({
                 data: {
-                    orderId: order.id,
-                    productId: product.id,
-                    quantity: qty,
-                    price: productPrice
+                    userId: customers[orderCount % 3].id,
+                    totalAmount: 0,
+                    status: status,
                 }
             });
-            total += productPrice;
+
+            let total = 0;
+            // Each order contains 1-2 products from the same category
+            const numItems = Math.random() > 0.5 ? 2 : 1;
+            const categoryProducts = products.filter((_, idx) =>
+                Math.floor(idx / 5) === dist.categoryIdx
+            );
+
+            for (let j = 0; j < numItems; j++) {
+                const product = categoryProducts[Math.floor(Math.random() * categoryProducts.length)];
+                const qty = 1;
+                const productPrice = Number(product.price);
+
+                await prisma.orderItem.create({
+                    data: {
+                        orderId: order.id,
+                        productId: product.id,
+                        quantity: qty,
+                        price: productPrice
+                    }
+                });
+                total += productPrice;
+            }
+
+            await prisma.order.update({
+                where: { id: order.id },
+                data: { totalAmount: total }
+            });
+
+            orderCount++;
+            console.log(`  ✓ Order ${orderCount}: ${dist.name} - ${status}`);
         }
-
-        await prisma.order.update({
-            where: { id: order.id },
-            data: { totalAmount: total }
-        });
-
-        console.log(`  ✓ Order ${i + 1}:`, status);
     }
 
     console.log('\n================================================');
@@ -168,7 +189,7 @@ async function main() {
     console.log('   Users: 5 (1 Admin, 1 Gudang, 3 Customers)');
     console.log('   Categories: 3');
     console.log('   Products: 15');
-    console.log('   Orders: 10');
+    console.log('   Orders: 15 (Akustik: 6, Elektrik: 5, Bass: 4)');
     console.log('================================================\n');
 }
 

@@ -1,0 +1,51 @@
+============================================================
+TESTING LANDING PAGE QUERIES
+============================================================
+
+📂 Testing Popular Categories Query...
+
+Found 3 popular categories:
+
+1. Gitar Akustik
+   - Slug: gitar-akustik
+   - Total Products: 5
+   - Total Order Items: 9
+
+2. Gitar Elektrik
+   - Slug: gitar-elektrik
+   - Total Products: 5
+   - Total Order Items: 8
+
+3. Bass
+   - Slug: bass
+   - Total Products: 5
+   - Total Order Items: 7
+
+
+🎸 Testing Featured Products Query...
+
+Found 4 featured products:
+
+1. Bass Series 15
+   - Category: Bass
+   - Price: Rp 9.000.000
+   - Stock: 10
+
+2. Bass Series 14
+   - Category: Bass
+   - Price: Rp 8.500.000
+   - Stock: 10
+
+3. Bass Series 13
+   - Category: Bass
+   - Price: Rp 8.000.000
+   - Stock: 10
+
+4. Bass Series 12
+   - Category: Bass
+   - Price: Rp 7.500.000
+   - Stock: 10
+
+============================================================
+✅ ALL TESTS COMPLETED
+============================================================
