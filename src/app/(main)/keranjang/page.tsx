@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getCart, updateCartItem, removeCartItem } from "@/app/actions/cart";
+import { createOrder } from "@/app/actions/order";
 import { BiteshipArea, BiteshipRate } from "@/lib/biteship";
 
 interface CartItem {
@@ -200,7 +201,7 @@ export default function KeranjangPage() {
     };
 
     // Handle checkout
-    const handleCheckout = () => {
+    const handleCheckout = async () => {
         if (!shippingForm.recipientName || !shippingForm.recipientPhone) {
             toast.error("Lengkapi data penerima");
             return;
@@ -213,12 +214,35 @@ export default function KeranjangPage() {
             toast.error("Isi detail alamat");
             return;
         }
-        if (!shippingForm.service) {
+        if (shippingForm.service === "") {
             toast.error("Pilih layanan pengiriman");
             return;
         }
 
-        toast.success("Fitur pembayaran akan segera hadir!");
+        setIsLoading(true);
+
+        // Get selected rate
+        const selectedRate = shippingRates[Number(shippingForm.service)];
+
+        const result = await createOrder({
+            recipientName: shippingForm.recipientName,
+            recipientPhone: shippingForm.recipientPhone,
+            areaId: shippingForm.areaId,
+            areaName: selectedArea?.name || areaQuery,
+            postalCode: shippingForm.postalCode,
+            addressDetail: shippingForm.addressDetail,
+            courier: selectedRate.courier_name,
+            service: selectedRate.courier_service_name,
+            shippingCost: selectedRate.price,
+        });
+
+        if (result.success && result.orderId) {
+            toast.success("Pesanan dibuat!");
+            router.push(`/pembayaran/${result.orderId}`);
+        } else {
+            toast.error(result.error || "Gagal membuat pesanan");
+            setIsLoading(false);
+        }
     };
 
     const formatPrice = (price: number) => {

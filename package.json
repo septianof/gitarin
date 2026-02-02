@@ -21,6 +21,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.563.0",
+    "midtrans-client": "^1.4.3",
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",
     "pg": "^8.18.0",
