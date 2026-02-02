@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import QueueTable from "@/components/dashboard/QueueTable";
-import { RefreshCcw, Printer } from "lucide-react";
+import { QueueActions } from "@/components/dashboard/QueueActions";
 
 export const metadata = {
     title: "Daftar Antrean - Gitarin Gudang",
@@ -46,6 +46,9 @@ export default async function AntreanPage() {
         recipient: order.shipment?.recipientName
     }));
 
+    // Get order IDs for bulk print
+    const orderIds = orders.map(order => order.id);
+
     return (
         <div className="flex flex-col gap-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -56,16 +59,7 @@ export default async function AntreanPage() {
                         <p className="text-gray-500 text-sm">{orders.length} pesanan menunggu cetak resi</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                        <RefreshCcw size={16} />
-                        Refresh Data
-                    </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-[#111417] text-white rounded-lg text-sm font-medium hover:bg-black transition-colors">
-                        <Printer size={16} />
-                        Cetak Semua Resi
-                    </button>
-                </div>
+                <QueueActions orderIds={orderIds} totalOrders={orders.length} />
             </div>
 
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">

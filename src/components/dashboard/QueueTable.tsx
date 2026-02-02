@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -21,6 +22,7 @@ interface QueueItem {
 }
 
 export default function QueueTable({ data }: { data: QueueItem[] }) {
+    const router = useRouter();
     const [processingId, setProcessingId] = useState<string | null>(null);
 
     const handlePrintResi = async (orderId: string) => {
@@ -32,6 +34,8 @@ export default function QueueTable({ data }: { data: QueueItem[] }) {
                 toast.success("Resi berhasil dicetak!", {
                     description: `Resi: ${result.trackingId}`
                 });
+                // Redirect to print label page
+                router.push(`/dashboard/antrean/${orderId}/print`);
             } else {
                 toast.error("Gagal mencetak resi", {
                     description: result.error

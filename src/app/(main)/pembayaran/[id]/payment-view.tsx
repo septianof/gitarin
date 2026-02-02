@@ -89,14 +89,11 @@ export default function PaymentView({ order, midtransClientKey }: { order: Order
                 window.snap.pay(token, {
                     onSuccess: function (result: any) {
                         toast.success("Pembayaran Berhasil!");
-                        // Redirect to profile/orders or success page (not yet created, so back to home/profile)
-                        router.push("/profil");
-                        // Note: User said "halaman pesanan di profile belum dibuat", so maybe just generic profile or stay here?
-                        // I'll push to profile for now.
+                        router.push("/profil/pesanan");
                     },
                     onPending: function (result: any) {
                         toast.info("Menunggu pembayaran...");
-                        router.push("/profil");
+                        router.push("/profil/pesanan");
                     },
                     onError: function (result: any) {
                         toast.error("Pembayaran gagal!");

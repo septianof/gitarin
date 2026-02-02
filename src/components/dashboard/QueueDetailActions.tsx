@@ -18,8 +18,8 @@ export function QueueDetailActions({ orderId, status, resi }: { orderId: string,
                 toast.success("Resi Berhasil Dibuat!", {
                     description: `Resi: ${result.trackingId}`
                 });
-                // Refresh the page to show updated data
-                router.refresh();
+                // Redirect to print label page
+                router.push(`/dashboard/antrean/${orderId}/print`);
             } else {
                 toast.error("Gagal Membuat Resi", {
                     description: result.error
@@ -66,7 +66,7 @@ export function QueueDetailActions({ orderId, status, resi }: { orderId: string,
             ) : (
                 <>
                     <Printer size={20} />
-                    Cetak Label Pengiriman
+                    Request Pickup & Cetak Resi
                 </>
             )}
         </button>
