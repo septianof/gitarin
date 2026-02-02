@@ -9,7 +9,13 @@ import {
     Users,
     Settings,
     LogOut,
-    ShoppingBag
+    ShoppingBag,
+    ListTodo,
+    History,
+    Shapes,
+    FileText,
+    Wallet,
+    UserPlus
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -26,39 +32,46 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
     const pathname = usePathname();
 
     const GUDANG_LINKS = [
-        { label: "Ringkasan", href: "/dashboard", icon: LayoutDashboard },
-        { label: "Pesanan Masuk", href: "/dashboard/pesanan", icon: Package },
-        { label: "Riwayat Pengiriman", href: "/dashboard/pengiriman", icon: Truck },
+        { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+        { label: "Daftar Antrean", href: "/dashboard/antrean", icon: ListTodo },
+        { label: "Riwayat Pengiriman", href: "/dashboard/riwayat", icon: History },
     ];
 
     const ADMIN_LINKS = [
-        { label: "Ringkasan", href: "/dashboard", icon: LayoutDashboard },
-        { label: "Kelola Produk", href: "/dashboard/produk", icon: ShoppingBag },
-        { label: "Kelola User", href: "/dashboard/users", icon: Users },
-        { label: "Laporan", href: "/dashboard/laporan", icon: Settings }, // Placeholder
+        { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+        { label: "Kelola Kategori", href: "/dashboard/kategori", icon: Shapes },
+        { label: "Kelola Produk", href: "/dashboard/produk", icon: Package },
+        { label: "Kelola Pengguna", href: "/dashboard/users", icon: Users },
+        { label: "Laporan Penjualan", href: "/dashboard/laporan", icon: FileText },
     ];
 
     const links = user.role === "ADMIN" ? ADMIN_LINKS : GUDANG_LINKS;
+    const title = user.role === "ADMIN" ? "Gitarin Admin" : "Gitarin Gudang";
 
     return (
         <aside className="w-full md:w-64 flex-shrink-0">
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-24">
-                {/* User Info */}
-                <div className="p-6 border-b border-gray-200 bg-gray-50/50">
-                    <div className="flex items-center gap-4 mb-1">
-                        <div
-                            className="size-12 rounded-full bg-cover bg-center border border-gray-200"
-                            style={{ backgroundImage: `url(${user.photo || '/placeholder-user.jpg'})` }}
-                        />
-                        <div className="overflow-hidden">
-                            <p className="text-sm font-bold text-zinc-900 truncate">{user.name}</p>
-                            <p className="text-xs text-gray-500 font-medium truncate">{user.role}</p>
-                        </div>
+            <div className="bg-white h-full min-h-[calc(100vh-80px)] p-4 flex flex-col gap-6 rounded-xl border border-gray-200 shadow-sm sticky top-24">
+                {/* Brand */}
+                <div className="flex items-center gap-3 px-2 py-2">
+                    <div className="size-10 rounded-full bg-zinc-900 flex items-center justify-center text-white font-bold shrink-0 border border-gray-100 overflow-hidden text-sm">
+                        {user.photo ? (
+                            <img
+                                src={user.photo}
+                                alt={user.name}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            user.name?.charAt(0).toUpperCase() || "U"
+                        )}
+                    </div>
+                    <div className="overflow-hidden">
+                        <h2 className="text-sm font-bold text-zinc-900 leading-tight">{title}</h2>
+                        <p className="text-xs text-gray-500 font-medium truncate">{user.email}</p>
                     </div>
                 </div>
 
                 {/* Navigation */}
-                <nav className="p-2 flex flex-col gap-1">
+                <nav className="flex flex-col gap-1 flex-1">
                     {links.map((link) => {
                         const Icon = link.icon;
                         const isActive = pathname === link.href;
@@ -68,8 +81,8 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
                                 key={link.href}
                                 href={link.href}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${isActive
-                                        ? "bg-zinc-900 text-white shadow-md"
-                                        : "text-gray-600 hover:bg-gray-50 hover:text-zinc-900"
+                                    ? "bg-[#111417] text-white shadow-sm"
+                                    : "text-gray-500 hover:bg-gray-200 hover:text-zinc-900"
                                     }`}
                             >
                                 <Icon size={18} />
@@ -79,10 +92,10 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
                     })}
                 </nav>
 
-                <div className="p-2 border-t border-gray-200 mt-2">
+                <div className="mt-auto">
                     <button
                         onClick={() => signOut({ callbackUrl: "/login" })}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-all text-left"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all text-left"
                     >
                         <LogOut size={18} />
                         Keluar
