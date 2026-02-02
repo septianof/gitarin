@@ -27,7 +27,17 @@ export default async function PaymentPage({ params }: { params: Promise<{ id: st
         notFound();
     }
 
-    if (order.status !== "PENDING") {
+    // Check if order is expired
+    if (order.status === "PENDING" && order.expiresAt && new Date() > order.expiresAt) {
+        // Update status to DIBATALKAN
+        await prisma.order.update({
+            where: { id: order.id },
+            data: { status: "DIBATALKAN" }
+        });
+        order.status = "DIBATALKAN";
+    }
+
+    if (order.status !== "PENDING" && order.status !== "DIBATALKAN") {
         // If already paid, redirect to profile or success
         // redirect("/profil"); // Uncomment later
     }
@@ -37,6 +47,7 @@ export default async function PaymentPage({ params }: { params: Promise<{ id: st
         ...order,
         totalAmount: Number(order.totalAmount),
         createdAt: order.createdAt, // Next.js handles Date serialization now, usually
+        expiresAt: order.expiresAt, // Include expiresAt for countdown
         items: order.items.map(item => ({
             ...item,
             price: Number(item.price), // Decimal to Number

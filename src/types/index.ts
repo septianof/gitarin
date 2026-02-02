@@ -6,6 +6,7 @@ export type SerializedOrder = {
     totalAmount: number;
     status: OrderStatus;
     snapToken: string | null;
+    expiresAt: Date | null;
     createdAt: Date;
     items: (Omit<OrderItem, "price" | "order" | "product"> & {
         price: number;

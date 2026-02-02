@@ -114,6 +114,7 @@ model Order {
   totalAmount Decimal     @db.Decimal(10, 2)
   status      OrderStatus @default(PENDING)
   snapToken   String?
+  expiresAt   DateTime?   // Order expires if not paid within this time
   createdAt   DateTime    @default(now())
 
   // Relations

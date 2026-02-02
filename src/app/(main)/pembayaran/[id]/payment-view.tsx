@@ -1,11 +1,11 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, ShoppingBag, ShieldCheck, Clock } from "lucide-react";
+import { Loader2, ShoppingBag, ShieldCheck, Clock, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Order {
@@ -13,6 +13,7 @@ interface Order {
     totalAmount: number | string;
     status: string;
     snapToken?: string | null;
+    expiresAt?: Date | string | null;
     createdAt: Date;
     items: {
         id: string;
@@ -39,6 +40,41 @@ export default function PaymentView({ order, midtransClientKey }: { order: Order
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [snapToken, setSnapToken] = useState(order.snapToken);
+    const [timeLeft, setTimeLeft] = useState<string>("--:--:--");
+    const [isExpired, setIsExpired] = useState(false);
+
+    // Calculate time left
+    const calculateTimeLeft = useCallback(() => {
+        if (!order.expiresAt) {
+            setTimeLeft("24:00:00");
+            return;
+        }
+
+        const expiryDate = new Date(order.expiresAt);
+        const now = new Date();
+        const diff = expiryDate.getTime() - now.getTime();
+
+        if (diff <= 0) {
+            setIsExpired(true);
+            setTimeLeft("00:00:00");
+            return;
+        }
+
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        setTimeLeft(
+            `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+        );
+    }, [order.expiresAt]);
+
+    // Countdown timer
+    useEffect(() => {
+        calculateTimeLeft();
+        const timer = setInterval(calculateTimeLeft, 1000);
+        return () => clearInterval(timer);
+    }, [calculateTimeLeft]);
 
     // Load Snap Script
     useEffect(() => {
@@ -122,16 +158,37 @@ export default function PaymentView({ order, midtransClientKey }: { order: Order
         }).format(Number(price));
     };
 
+    // Show expired UI if order is expired
+    if (isExpired || order.status === "DIBATALKAN") {
+        return (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="size-20 bg-red-100 rounded-full flex items-center justify-center mb-6">
+                    <AlertTriangle className="w-10 h-10 text-red-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-zinc-900 mb-2">Pesanan Kedaluwarsa</h2>
+                <p className="text-gray-500 mb-6 max-w-md">
+                    Waktu pembayaran untuk pesanan ini telah habis. Silakan buat pesanan baru.
+                </p>
+                <Button
+                    onClick={() => router.push("/profil/pesanan")}
+                    className="bg-zinc-900 hover:bg-zinc-800"
+                >
+                    Lihat Pesanan Saya
+                </Button>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col lg:flex-row gap-8 items-start">
             {/* Left: Payment Action */}
             <div className="flex-1 w-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="bg-gray-50 p-4 border-b border-gray-200">
                     <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-500">Selesaikan pembayaran</span>
-                        <div className="flex items-center gap-2 text-zinc-900">
+                        <span className="text-sm font-medium text-gray-500">Selesaikan pembayaran dalam</span>
+                        <div className={`flex items-center gap-2 ${timeLeft.startsWith("00:") ? "text-red-600" : "text-zinc-900"}`}>
                             <Clock className="w-4 h-4" />
-                            <span className="text-sm font-bold">24:00:00</span>
+                            <span className="text-sm font-bold font-mono">{timeLeft}</span>
                         </div>
                     </div>
                 </div>

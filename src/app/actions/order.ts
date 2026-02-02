@@ -36,6 +36,10 @@ export async function createOrder(data: CreateOrderData) {
         const subtotal = cartResult.subtotal || 0;
         const totalAmount = subtotal + data.shippingCost;
 
+        // Order expires in 24 hours
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 24);
+
         // Transaction: Create Order, Items, Shipment, Clear Cart
         const order = await prisma.$transaction(async (tx) => {
             // 1. Create Order
@@ -44,6 +48,7 @@ export async function createOrder(data: CreateOrderData) {
                     userId: session.user.id,
                     totalAmount: totalAmount,
                     status: "PENDING",
+                    expiresAt: expiresAt,
                 },
             });
 
@@ -92,12 +97,36 @@ export async function createOrder(data: CreateOrderData) {
     }
 }
 
+// Helper: Check if order is expired and update status
+async function checkAndExpireOrder(orderId: string): Promise<boolean> {
+    const order = await prisma.order.findUnique({
+        where: { id: orderId },
+        select: { status: true, expiresAt: true }
+    });
+
+    if (!order) return false;
+
+    // Only check PENDING orders with expiresAt set
+    if (order.status === "PENDING" && order.expiresAt && new Date() > order.expiresAt) {
+        await prisma.order.update({
+            where: { id: orderId },
+            data: { status: "DIBATALKAN" }
+        });
+        return true; // Order was expired
+    }
+
+    return false;
+}
+
 export async function getOrder(orderId: string) {
     try {
         if (!orderId) return null;
 
         const session = await auth();
         if (!session?.user?.id) return null;
+
+        // Check and auto-expire if needed
+        await checkAndExpireOrder(orderId);
 
         const order = await prisma.order.findUnique({
             where: { id: orderId },
@@ -148,6 +177,20 @@ export async function getUserOrders(status?: string) {
         if (status && status !== "ALL") {
             whereClause.status = status;
         }
+
+        // First, auto-expire any PENDING orders that have passed expiresAt
+        await prisma.order.updateMany({
+            where: {
+                userId: session.user.id,
+                status: "PENDING",
+                expiresAt: {
+                    lt: new Date()
+                }
+            },
+            data: {
+                status: "DIBATALKAN"
+            }
+        });
 
         const orders = await prisma.order.findMany({
             where: whereClause,
