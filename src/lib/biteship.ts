@@ -93,11 +93,85 @@ export interface ShippingItem {
     weight: number; // in grams
 }
 
+// ... existing code ...
+
+export interface CreateOrderPayload {
+    origin: {
+        area_id: string;
+        address: string;
+        postal_code: number;
+    };
+    destination: {
+        area_id: string;
+        address: string;
+        postal_code: number;
+    };
+    shipper: {
+        name: string;
+        phone: string;
+    };
+    consignee: {
+        name: string;
+        phone: string;
+    };
+    courier: {
+        company: string; // e.g., "jne"
+        type: string;    // e.g., "reg"
+    };
+    items: ShippingItem[];
+    note?: string;
+}
+
+export interface BiteshipOrderResponse {
+    success: boolean;
+    id: string;
+    waybill_id: string; // Resi
+    courier: {
+        tracking_id: string; // Resi
+        waybill_id: string;
+    };
+    price: number;
+    status: string;
+}
+
+export async function createShippingOrder(payload: CreateOrderPayload): Promise<BiteshipOrderResponse | null> {
+    try {
+        const response = await fetch(`${BITESHIP_BASE_URL}/orders`, {
+            method: "POST",
+            headers: {
+                Authorization: BITESHIP_API_KEY,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            console.error("Biteship Create Order Error:", JSON.stringify(data));
+            return null;
+        }
+
+        return {
+            success: true,
+            id: data.id,
+            waybill_id: data.courier?.waybill_id || data.courier?.tracking_id, // Normalize Resi
+            courier: data.courier,
+            price: data.price,
+            status: data.status
+        };
+    } catch (error) {
+        console.error("Failed to create shipping order:", error);
+        return null;
+    }
+}
+
 export async function getRates(
     originAreaId: string,
     destinationAreaId: string,
     items: ShippingItem[]
 ): Promise<BiteshipRate[]> {
+    // ... existing implementation ...
     try {
         const payload = {
             origin_area_id: originAreaId,
