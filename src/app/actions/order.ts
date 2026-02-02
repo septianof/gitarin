@@ -107,9 +107,61 @@ export async function getOrder(orderId: string) {
 
         if (!order || order.userId !== session.user.id) return null;
 
+
         return order;
     } catch (error) {
         console.error("Get order error:", error);
         return null;
+    }
+}
+
+export async function getUserOrders(status?: string) {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+        const whereClause: any = { userId: session.user.id };
+        if (status && status !== "ALL") {
+            whereClause.status = status;
+        }
+
+        const orders = await prisma.order.findMany({
+            where: whereClause,
+            include: {
+                items: {
+                    include: {
+                        product: true
+                    }
+                },
+                shipment: true
+            },
+            orderBy: {
+                createdAt: "desc"
+            }
+        });
+
+        // Serialization: Convert Decimal to number for Client Components
+        const serializedOrders = orders.map(order => ({
+            ...order,
+            totalAmount: Number(order.totalAmount),
+            items: order.items.map(item => ({
+                ...item,
+                price: Number(item.price),
+                product: {
+                    ...item.product,
+                    price: Number(item.product.price)
+                }
+            })),
+            shipment: order.shipment ? {
+                ...order.shipment,
+                cost: Number(order.shipment.cost)
+            } : null,
+            payment: null // We didn't include payment, but if we did, serialize it too.
+        }));
+
+        return { success: true, orders: serializedOrders };
+    } catch (error) {
+        console.error("Get user orders error:", error);
+        return { success: false, error: "Gagal mengambil data pesanan" };
     }
 }

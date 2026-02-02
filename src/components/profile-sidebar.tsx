@@ -19,7 +19,7 @@ export function ProfileSidebar({ user }: ProfileSidebarProps) {
 
     const navigation = [
         { name: "Informasi Akun", href: "/profil", icon: User },
-        // { name: "Daftar Pesanan", href: "/profil/pesanan", icon: Package2 }, // Coming soon/Next task
+        { name: "Daftar Pesanan", href: "/profil/pesanan", icon: Package2 },
     ];
 
     return (
@@ -71,21 +71,6 @@ export function ProfileSidebar({ user }: ProfileSidebarProps) {
                             </Link>
                         );
                     })}
-
-                    <Link
-                        href="/profil/pesanan"
-                        className={cn(
-                            "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors group",
-                            pathname === "/profil/pesanan"
-                                ? "bg-[#111417] text-white"
-                                : "hover:bg-[#f0f2f4] text-[#647587] hover:text-[#111417]"
-                        )}
-                    >
-                        <Package2 size={20} />
-                        <p className="text-sm font-medium leading-normal">
-                            Daftar Pesanan
-                        </p>
-                    </Link>
 
 
                     <div className="h-px bg-[#f0f2f4] my-2"></div>
