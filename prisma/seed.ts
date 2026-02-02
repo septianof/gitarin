@@ -177,6 +177,22 @@ async function main() {
                 data: { totalAmount: total }
             });
 
+            // Create Shipment for each order
+            await prisma.shipment.create({
+                data: {
+                    orderId: order.id,
+                    recipientName: customers[orderCount % 3].name,
+                    recipientPhone: '081234567890',
+                    addressCity: 'Jakarta Selatan',
+                    addressDetail: 'Jl. Gitar Melodi No. 42, RT 05/RW 02, Kebayoran Baru',
+                    postalCode: '12160',
+                    courier: 'JNE',
+                    service: 'REG',
+                    cost: 15000,
+                    status: status
+                }
+            });
+
             orderCount++;
             console.log(`  ✓ Order ${orderCount}: ${dist.name} - ${status}`);
         }

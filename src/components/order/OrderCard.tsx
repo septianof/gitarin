@@ -80,5 +80,10 @@ export function OrderCard({ order }: OrderCardProps) {
         );
     }
 
-    return CardContent;
+    // New: Link for other statuses
+    return (
+        <Link href={`/profil/pesanan/${order.id}`} className="block">
+            {CardContent}
+        </Link>
+    );
 }

@@ -90,6 +90,8 @@ export async function createOrder(data: CreateOrderData) {
 
 export async function getOrder(orderId: string) {
     try {
+        if (!orderId) return null;
+
         const session = await auth();
         if (!session?.user?.id) return null;
 
@@ -107,8 +109,26 @@ export async function getOrder(orderId: string) {
 
         if (!order || order.userId !== session.user.id) return null;
 
+        // Serialization
+        const serializedOrder = {
+            ...order,
+            totalAmount: Number(order.totalAmount),
+            items: order.items.map(item => ({
+                ...item,
+                price: Number(item.price),
+                product: {
+                    ...item.product,
+                    price: Number(item.product.price)
+                }
+            })),
+            shipment: order.shipment ? {
+                ...order.shipment,
+                cost: Number(order.shipment.cost)
+            } : null,
+            payment: null
+        };
 
-        return order;
+        return serializedOrder;
     } catch (error) {
         console.error("Get order error:", error);
         return null;
