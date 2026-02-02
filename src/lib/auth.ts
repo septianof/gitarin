@@ -7,6 +7,7 @@ import type { Role } from "@prisma/client";
 declare module "next-auth" {
     interface User {
         role: Role;
+        photo?: string | null;
     }
     interface Session {
         user: {
@@ -14,6 +15,7 @@ declare module "next-auth" {
             name: string;
             email: string;
             role: Role;
+            photo?: string | null;
         };
     }
 }
@@ -22,6 +24,7 @@ declare module "@auth/core/jwt" {
     interface JWT {
         id: string;
         role: Role;
+        photo?: string | null;
     }
 }
 
@@ -64,15 +67,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     name: user.name,
                     email: user.email,
                     role: user.role,
+                    photo: user.photo,
                 };
             },
         }),
     ],
     callbacks: {
-        async jwt({ token, user }) {
+        async jwt({ token, user, trigger, session }) {
             if (user) {
                 token.id = user.id as string;
                 token.role = user.role;
+                token.photo = user.photo;
+            }
+            // Support updating session from client
+            if (trigger === "update" && session) {
+                if (session.name) token.name = session.name;
+                if (session.photo) token.photo = session.photo;
             }
             return token;
         },
@@ -80,6 +90,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             if (token) {
                 session.user.id = token.id;
                 session.user.role = token.role;
+                session.user.photo = token.photo;
             }
             return session;
         },

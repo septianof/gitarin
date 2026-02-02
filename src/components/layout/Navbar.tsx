@@ -156,8 +156,16 @@ export function Navbar() {
                                         onClick={() => setShowUserMenu(!showUserMenu)}
                                         className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition"
                                     >
-                                        <div className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center text-white font-semibold">
-                                            {session.user.name?.charAt(0).toUpperCase() || "U"}
+                                        <div className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center text-white font-semibold overflow-hidden border border-gray-200">
+                                            {session.user.photo ? (
+                                                <img
+                                                    src={session.user.photo}
+                                                    alt={session.user.name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                session.user.name?.charAt(0).toUpperCase() || "U"
+                                            )}
                                         </div>
                                     </button>
 

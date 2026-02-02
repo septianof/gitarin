@@ -4,6 +4,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { updateProfile, changePassword } from "@/app/actions/user";
 import { User as UserIcon, Camera } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Input } from "@/components/ui/input";
 
 interface ProfileFormProps {
     user: {
@@ -15,6 +17,30 @@ interface ProfileFormProps {
 
 export function ProfileForm({ user }: ProfileFormProps) {
     const [isLoading, setIsLoading] = useState(false);
+    const [photoPreview, setPhotoPreview] = useState<string | null>(user.photo || null);
+
+    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                toast.error("Ukuran file maksimal 2MB");
+                return;
+            }
+            const objectUrl = URL.createObjectURL(file);
+            setPhotoPreview(objectUrl);
+            // Clean up memory when component unmounts or changes
+            // This cleanup should ideally be in a useEffect with photoPreview as a dependency
+            // or when the component unmounts. For a simple onChange, it's often managed
+            // by the browser's garbage collection or explicit cleanup in a useEffect.
+            // For now, we'll keep it as per the instruction.
+            // return () => URL.revokeObjectURL(objectUrl); 
+        } else {
+            setPhotoPreview(user.photo || null); // Revert to original if no file selected
+        }
+    };
+
+    const { update } = useSession(); // Get update function from session hook
+    const [handleUpdate, setHandleUpdate] = useState(false); // Force re-render trigger if needed
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -23,10 +49,10 @@ export function ProfileForm({ user }: ProfileFormProps) {
         const formData = new FormData(event.currentTarget);
         const newPassword = formData.get("newPassword") as string;
         const currentPassword = formData.get("currentPassword") as string;
+        const name = formData.get("name") as string;
 
         try {
-            // 1. Update Profile (Name)
-            // Always run this as name might have changed
+            // 1. Update Profile (Name & Photo)
             const profileRes = await updateProfile(null, formData);
 
             if (!profileRes.success) {
@@ -34,6 +60,21 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 setIsLoading(false);
                 return;
             }
+
+            // Update Session on Client side to reflect changes in Navbar immediately
+            // We pass the new data to optimize the update without fetch, or just call update() to refetch
+            if (profileRes.user) {
+                await update({
+                    name: profileRes.user.name,
+                    photo: profileRes.user.photo
+                });
+            } else {
+                // Fallback if no user data returned (shouldn't happen with new backend)
+                await update();
+            }
+
+            // Force a router refresh to be safe for server components
+            // router.refresh(); // Not imported yet, but update() should handle client side session
 
             // 2. Update Password (if provided)
             if (newPassword || currentPassword) {
@@ -73,48 +114,50 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 </p>
             </div>
 
-            {/* Profile Photo Section */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-10">
-                <div
-                    className="bg-center bg-no-repeat bg-cover rounded-full size-24 sm:size-32 border-2 border-gray-100 shadow-sm bg-gray-100 flex items-center justify-center"
-                    style={{
-                        backgroundImage: user.photo ? `url("${user.photo}")` : undefined,
-                    }}
-                >
-                    {!user.photo && <UserIcon className="size-12 text-gray-400" />}
-                </div>
-                <div className="flex flex-col gap-3 items-center sm:items-start pt-2">
-                    <div>
-                        <h3 className="text-[#111417] text-lg font-bold leading-tight">
-                            Foto Profil
-                        </h3>
-                        <p className="text-[#647587] text-sm mt-1">
-                            Format: JPG, GIF atau PNG. Maks 800K.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        disabled
-                        className="flex items-center justify-center h-9 px-4 rounded-lg border border-[#dce0e5] bg-white text-[#111417] text-sm font-bold hover:bg-[#f0f2f4] transition-colors opacity-50 cursor-not-allowed"
-                        title="Fitur upload foto belum tersedia"
-                    >
-                        Ubah Foto
-                    </button>
-                </div>
-            </div>
-
             {/* Edit Form */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+                {/* Profile Photo Section (Inside Form to capture formData) */}
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-2">
+                    <div
+                        className="bg-center bg-no-repeat bg-cover rounded-full size-24 sm:size-32 border-2 border-gray-100 shadow-sm bg-gray-100 flex items-center justify-center relative overflow-hidden"
+                        style={{
+                            backgroundImage: photoPreview ? `url("${photoPreview}")` : undefined,
+                        }}
+                    >
+                        {!photoPreview && <UserIcon className="size-12 text-gray-400" />}
+                    </div>
+                    <div className="flex flex-col gap-3 items-center sm:items-start pt-2">
+                        <div>
+                            <h3 className="text-[#111417] text-lg font-bold leading-tight">
+                                Foto Profil
+                            </h3>
+                            <p className="text-[#647587] text-sm mt-1">
+                                Format: JPG, GIF atau PNG. Maks 2MB.
+                            </p>
+                        </div>
+                        <label className="flex items-center justify-center h-9 px-4 rounded-lg border border-[#dce0e5] bg-white text-[#111417] text-sm font-bold hover:bg-[#f0f2f4] transition-colors cursor-pointer">
+                            <span>Ubah Foto</span>
+                            <input
+                                type="file"
+                                name="photo"
+                                accept="image/png, image/jpeg, image/gif, image/webp"
+                                className="hidden"
+                                onChange={handlePhotoChange}
+                            />
+                        </label>
+                    </div>
+                </div>
+
                 {/* Personal Info */}
                 <div className="flex flex-col gap-5">
                     <label className="flex flex-col w-full">
                         <p className="text-[#111417] text-sm font-bold leading-normal pb-2">
                             Nama Lengkap
                         </p>
-                        <input
+                        <Input
                             name="name"
                             defaultValue={user.name}
-                            className="flex w-full rounded-lg text-[#111417] focus:ring-2 focus:ring-black focus:border-black border-[#dce0e5] bg-white h-12 px-4 text-base placeholder:text-[#9aa2ac]"
+                            className="bg-white h-12 text-base border-gray-300 focus-visible:ring-black"
                             type="text"
                             required
                         />
@@ -123,10 +166,10 @@ export function ProfileForm({ user }: ProfileFormProps) {
                         <p className="text-[#111417] text-sm font-bold leading-normal pb-2">
                             Email
                         </p>
-                        <input
+                        <Input
                             defaultValue={user.email}
                             disabled
-                            className="flex w-full rounded-lg text-[#647587] border-[#f0f2f4] bg-[#f8f9fa] h-12 px-4 text-base cursor-not-allowed"
+                            className="bg-gray-100 h-12 text-base border-gray-200 text-gray-500 cursor-not-allowed"
                             type="email"
                         />
                         <span className="text-xs text-[#647587] mt-1.5 ml-1">
@@ -145,9 +188,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
                             Password Lama
                         </p>
                         <div className="relative">
-                            <input
+                            <Input
                                 name="currentPassword"
-                                className="flex w-full rounded-lg text-[#111417] focus:ring-2 focus:ring-black focus:border-black border-[#dce0e5] bg-white h-12 px-4 text-base placeholder:text-[#9aa2ac]"
+                                className="bg-white h-12 text-base border-gray-300 focus-visible:ring-black"
                                 placeholder="••••••••"
                                 type="password"
                             />
@@ -158,9 +201,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
                             <p className="text-[#111417] text-sm font-bold leading-normal pb-2">
                                 Password Baru
                             </p>
-                            <input
+                            <Input
                                 name="newPassword"
-                                className="flex w-full rounded-lg text-[#111417] focus:ring-2 focus:ring-black focus:border-black border-[#dce0e5] bg-white h-12 px-4 text-base placeholder:text-[#9aa2ac]"
+                                className="bg-white h-12 text-base border-gray-300 focus-visible:ring-black"
                                 type="password"
                             />
                         </label>
@@ -168,9 +211,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
                             <p className="text-[#111417] text-sm font-bold leading-normal pb-2">
                                 Konfirmasi Password Baru
                             </p>
-                            <input
+                            <Input
                                 name="confirmPassword"
-                                className="flex w-full rounded-lg text-[#111417] focus:ring-2 focus:ring-black focus:border-black border-[#dce0e5] bg-white h-12 px-4 text-base placeholder:text-[#9aa2ac]"
+                                className="bg-white h-12 text-base border-gray-300 focus-visible:ring-black"
                                 type="password"
                             />
                         </label>
