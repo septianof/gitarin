@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
-import { ArrowLeft, Package, Truck, User, Printer } from "lucide-react";
+import { ArrowLeft, Package, Truck, User, Printer, MapPin } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 
