@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, FileText, Eye } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface OrderItem {
@@ -18,16 +18,15 @@ interface OrderItem {
 interface Order {
     id: string;
     createdAt: Date;
-    total: number;
-    shippingCost: number;
-    shippingCity: string;
-    shippingProvince: string;
     user: {
         id: string;
         name: string | null;
         email: string;
     };
     items: OrderItem[];
+    shipment: {
+        cost: number;
+    } | null;
 }
 
 interface Pagination {
@@ -107,14 +106,13 @@ export function SalesReportTable({ orders, pagination }: SalesReportTableProps) 
                             <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                 Total
                             </th>
-                            <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Aksi
-                            </th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                         {orders.map((order) => {
-                            const subtotal = order.total - order.shippingCost;
+                            const subtotal = order.items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
+                            const shippingCost = order.shipment ? Number(order.shipment.cost) : 0;
+                            const total = subtotal + shippingCost;
                             const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
                             
                             return (
@@ -163,25 +161,13 @@ export function SalesReportTable({ orders, pagination }: SalesReportTableProps) 
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className="text-gray-600">
-                                            {formatCurrency(order.shippingCost)}
+                                            {formatCurrency(shippingCost)}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className="font-semibold text-gray-900">
-                                            {formatCurrency(order.total)}
+                                            {formatCurrency(total)}
                                         </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center justify-end">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => router.push(`/profil/pesanan/${order.id}`)}
-                                                className="text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100"
-                                            >
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
-                                        </div>
                                     </td>
                                 </tr>
                             );

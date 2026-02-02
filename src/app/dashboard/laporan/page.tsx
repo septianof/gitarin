@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getSalesReport } from "@/app/actions/report";
 import { SalesReportTable } from "@/components/dashboard/SalesReportTable";
-import { SalesReportFilters } from "@/components/dashboard/SalesReportFilters";
 import { SalesReportSummary } from "@/components/dashboard/SalesReportSummary";
 import { ExportButton } from "@/components/dashboard/ExportButton";
 
@@ -13,8 +12,6 @@ export const metadata = {
 interface PageProps {
     searchParams: Promise<{
         page?: string;
-        startDate?: string;
-        endDate?: string;
     }>;
 }
 
@@ -27,15 +24,8 @@ export default async function LaporanPenjualanPage({ searchParams }: PageProps) 
 
     const params = await searchParams;
     const page = parseInt(params.page || "1");
-    const startDate = params.startDate || "";
-    const endDate = params.endDate || "";
 
-    const result = await getSalesReport({ 
-        page, 
-        limit: 10, 
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
-    });
+    const result = await getSalesReport({ page, limit: 10 });
 
     const orders = result.success ? result.orders : [];
     const pagination = result.success ? result.pagination : null;
@@ -48,13 +38,10 @@ export default async function LaporanPenjualanPage({ searchParams }: PageProps) 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-zinc-900">Laporan Penjualan</h1>
-                    <p className="text-sm text-gray-500 mt-1">Laporan pesanan yang sudah selesai.</p>
+                    <p className="text-sm text-gray-500 mt-1">Semua pesanan yang sudah selesai.</p>
                 </div>
-                <ExportButton startDate={startDate} endDate={endDate} />
+                <ExportButton />
             </div>
-
-            {/* Filters */}
-            <SalesReportFilters />
 
             {/* Summary Cards */}
             <SalesReportSummary 

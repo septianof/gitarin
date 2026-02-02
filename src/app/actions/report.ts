@@ -16,39 +16,24 @@ async function isAdmin() {
     return user?.role === "ADMIN";
 }
 
-// Get sales report - only SELESAI orders
+// Get sales report - only SELESAI orders (simplified version)
 export async function getSalesReport(params: {
     page?: number;
     limit?: number;
-    startDate?: string;
-    endDate?: string;
 }) {
     if (!await isAdmin()) {
         return { success: false, error: "Unauthorized" };
     }
 
-    const { page = 1, limit = 10, startDate, endDate } = params;
+    const { page = 1, limit = 10 } = params;
     const skip = (page - 1) * limit;
 
     try {
-        // Build date filter
-        const dateFilter: { gte?: Date; lte?: Date } = {};
-        if (startDate) {
-            dateFilter.gte = new Date(startDate);
-        }
-        if (endDate) {
-            // Set to end of day
-            const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999);
-            dateFilter.lte = end;
-        }
-
         const where = {
-            status: "SELESAI",
-            ...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter }),
+            status: "SELESAI" as const,
         };
 
-        const [orders, total, summary] = await Promise.all([
+        const [rawOrders, total] = await Promise.all([
             prisma.order.findMany({
                 where,
                 include: {
@@ -70,61 +55,78 @@ export async function getSalesReport(params: {
                             },
                         },
                     },
+                    shipment: {
+                        select: {
+                            cost: true,
+                        },
+                    },
                 },
                 orderBy: { createdAt: "desc" },
                 skip,
                 take: limit,
             }),
             prisma.order.count({ where }),
-            // Summary for filtered period
-            prisma.order.aggregate({
-                where,
-                _sum: {
-                    total: true,
-                    shippingCost: true,
-                },
-                _count: {
-                    id: true,
-                },
-            }),
         ]);
 
-        // Calculate product totals for the period
-        const productSales = await prisma.orderItem.groupBy({
-            by: ['productId'],
-            where: {
-                order: {
-                    status: "SELESAI",
-                    ...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter }),
+        // Convert Decimal to number to avoid serialization issues
+        const orders = rawOrders.map(order => ({
+            id: order.id,
+            createdAt: order.createdAt,
+            user: order.user,
+            items: order.items.map(item => ({
+                id: item.id,
+                orderId: item.orderId,
+                productId: item.productId,
+                quantity: item.quantity,
+                price: Number(item.price),
+                product: {
+                    id: item.product.id,
+                    name: item.product.name,
+                    price: Number(item.product.price),
                 },
-            },
-            _sum: {
-                quantity: true,
-            },
+            })),
+            shipment: order.shipment ? {
+                cost: Number(order.shipment.cost),
+            } : null,
+        }));
+
+        // Calculate summary
+        const totalRevenue = orders.reduce((sum, order) => {
+            const itemsTotal = order.items.reduce((itemSum, item) => {
+                return itemSum + (Number(item.price) * item.quantity);
+            }, 0);
+            return sum + itemsTotal;
+        }, 0);
+
+        const totalShipping = orders.reduce((sum, order) => {
+            return sum + (order.shipment ? Number(order.shipment.cost) : 0);
+        }, 0);
+
+        // Calculate product totals
+        const productMap = new Map<string, { id: string; name: string; quantity: number; revenue: number }>();
+        
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                const existing = productMap.get(item.productId);
+                const revenue = Number(item.price) * item.quantity;
+                
+                if (existing) {
+                    existing.quantity += item.quantity;
+                    existing.revenue += revenue;
+                } else {
+                    productMap.set(item.productId, {
+                        id: item.product.id,
+                        name: item.product.name,
+                        quantity: item.quantity,
+                        revenue: revenue,
+                    });
+                }
+            });
         });
 
-        // Get product details for top products
-        const topProductIds = productSales
-            .sort((a, b) => (b._sum.quantity || 0) - (a._sum.quantity || 0))
-            .slice(0, 5)
-            .map(p => p.productId);
-
-        const topProducts = await prisma.product.findMany({
-            where: { id: { in: topProductIds } },
-            select: { id: true, name: true },
-        });
-
-        const topProductsWithSales = productSales
-            .filter(p => topProductIds.includes(p.productId))
-            .map(ps => {
-                const product = topProducts.find(p => p.id === ps.productId);
-                return {
-                    productId: ps.productId,
-                    productName: product?.name || "Unknown",
-                    totalSold: ps._sum.quantity || 0,
-                };
-            })
-            .sort((a, b) => b.totalSold - a.totalSold);
+        const topProducts = Array.from(productMap.values())
+            .sort((a, b) => b.quantity - a.quantity)
+            .slice(0, 5);
 
         return {
             success: true,
@@ -136,48 +138,29 @@ export async function getSalesReport(params: {
                 totalPages: Math.ceil(total / limit),
             },
             summary: {
-                totalOrders: summary._count.id || 0,
-                totalRevenue: summary._sum.total || 0,
-                totalShipping: summary._sum.shippingCost || 0,
+                totalOrders: total,
+                totalRevenue,
+                totalShipping,
             },
-            topProducts: topProductsWithSales,
+            topProducts,
         };
     } catch (error) {
         console.error("Error fetching sales report:", error);
-        return { success: false, error: "Gagal mengambil laporan penjualan" };
+        return { success: false, error: "Failed to fetch sales report" };
     }
 }
 
-// Get all completed orders for export (no pagination)
-export async function exportSalesReport(params: {
-    startDate?: string;
-    endDate?: string;
-}) {
+// Export all SELESAI orders data (for PDF generation)
+export async function exportSalesReport() {
     if (!await isAdmin()) {
         return { success: false, error: "Unauthorized" };
     }
 
-    const { startDate, endDate } = params;
-
     try {
-        // Build date filter
-        const dateFilter: { gte?: Date; lte?: Date } = {};
-        if (startDate) {
-            dateFilter.gte = new Date(startDate);
-        }
-        if (endDate) {
-            const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999);
-            dateFilter.lte = end;
-        }
-
-        const where = {
-            status: "SELESAI",
-            ...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter }),
-        };
-
-        const orders = await prisma.order.findMany({
-            where,
+        const rawOrders = await prisma.order.findMany({
+            where: {
+                status: "SELESAI",
+            },
             include: {
                 user: {
                     select: {
@@ -190,57 +173,62 @@ export async function exportSalesReport(params: {
                         product: {
                             select: {
                                 name: true,
+                                price: true,
                             },
                         },
+                    },
+                },
+                shipment: {
+                    select: {
+                        cost: true,
                     },
                 },
             },
             orderBy: { createdAt: "desc" },
         });
 
-        // Summary
-        const summary = await prisma.order.aggregate({
-            where,
-            _sum: {
-                total: true,
-                shippingCost: true,
-            },
-            _count: {
-                id: true,
-            },
-        });
-
-        // Format orders for export
-        const exportData = orders.map(order => ({
-            orderId: order.id,
-            orderDate: new Date(order.createdAt).toLocaleDateString("id-ID"),
-            customerName: order.user.name || "N/A",
-            customerEmail: order.user.email,
-            items: order.items.map(item => 
-                `${item.product.name} (${item.quantity}x)`
-            ).join("; "),
-            itemsCount: order.items.reduce((sum, item) => sum + item.quantity, 0),
-            subtotal: order.total - order.shippingCost,
-            shippingCost: order.shippingCost,
-            total: order.total,
-            shippingAddress: `${order.shippingAddress}, ${order.shippingCity}, ${order.shippingProvince}`,
+        // Serialize orders properly
+        const orders = rawOrders.map(order => ({
+            id: order.id,
+            createdAt: order.createdAt,
+            user: order.user,
+            items: order.items.map(item => ({
+                quantity: item.quantity,
+                price: Number(item.price),
+                product: {
+                    name: item.product.name,
+                    price: Number(item.product.price),
+                },
+            })),
+            shipment: order.shipment ? {
+                cost: Number(order.shipment.cost),
+            } : null,
         }));
+
+        // Calculate summary
+        const totalRevenue = orders.reduce((sum, order) => {
+            const itemsTotal = order.items.reduce((itemSum, item) => {
+                return itemSum + (item.price * item.quantity);
+            }, 0);
+            return sum + itemsTotal;
+        }, 0);
+
+        const totalShipping = orders.reduce((sum, order) => {
+            return sum + (order.shipment ? order.shipment.cost : 0);
+        }, 0);
 
         return {
             success: true,
-            data: exportData,
+            orders,
             summary: {
-                totalOrders: summary._count.id || 0,
-                totalRevenue: summary._sum.total || 0,
-                totalShipping: summary._sum.shippingCost || 0,
-                dateRange: {
-                    start: startDate || "All time",
-                    end: endDate || "Now",
-                },
+                totalOrders: orders.length,
+                totalRevenue,
+                totalShipping,
+                grandTotal: totalRevenue + totalShipping,
             },
         };
     } catch (error) {
         console.error("Error exporting sales report:", error);
-        return { success: false, error: "Gagal mengekspor laporan" };
+        return { success: false, error: "Failed to export sales report" };
     }
 }
