@@ -69,13 +69,18 @@ async function main() {
     // 4. Create Categories
     console.log('\n📁 Creating categories...');
     const catNames = ['Gitar Akustik', 'Gitar Elektrik', 'Bass'];
+    const categoryImages = [
+        "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=1200&h=600&q=60",
+        "https://images.unsplash.com/photo-1550291652-6ea9114a47b1?auto=format&fit=crop&w=1200&h=600&q=60",
+        "https://images.unsplash.com/photo-1564186763535-ebb21ef5277f?auto=format&fit=crop&w=1200&h=600&q=60",
+    ];
     const categories = [];
-    for (const name of catNames) {
+    for (let i = 0; i < catNames.length; i++) {
         const cat = await prisma.category.create({
             data: {
-                name,
-                slug: slugify(name),
-                image: null
+                name: catNames[i],
+                slug: slugify(catNames[i]),
+                image: categoryImages[i]
             }
         });
         categories.push(cat);
@@ -108,7 +113,7 @@ async function main() {
                 price: 2000000 + (i * 500000),
                 stock: 10,
                 weight: 3000 + (i * 100),
-                image: `${guitarImages[catIdx]}?auto=format&fit=crop&w=800&q=60`,
+                image: `${guitarImages[catIdx]}?auto=format&fit=crop&w=600&h=800&q=60`,
                 categoryId: categories[catIdx].id
             }
         });
