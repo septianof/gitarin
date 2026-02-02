@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { Printer, Loader2, Eye } from "lucide-react";
@@ -92,12 +93,13 @@ export default function QueueTable({ data }: { data: QueueItem[] }) {
                             </td>
                             <td className="px-4 py-3 text-left whitespace-nowrap">
                                 <div className="flex items-center justify-start gap-2">
-                                    <button
+                                    <Link
+                                        href={`/dashboard/antrean/${item.id}`}
                                         className="p-2 text-gray-400 hover:text-zinc-900 transition-colors rounded-full hover:bg-gray-100"
                                         title="Lihat Detail"
                                     >
                                         <Eye size={16} />
-                                    </button>
+                                    </Link>
                                     <button
                                         onClick={() => handlePrintResi(item.id)}
                                         disabled={!!processingId}
