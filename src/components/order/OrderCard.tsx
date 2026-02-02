@@ -18,7 +18,6 @@ export function OrderCard({ order }: OrderCardProps) {
         year: "numeric",
     });
 
-    // Helper for status badge style
     const getStatusStyle = (status: OrderStatus) => {
         switch (status) {
             case "PENDING":
@@ -36,8 +35,8 @@ export function OrderCard({ order }: OrderCardProps) {
         }
     };
 
-    return (
-        <div className="group flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white border border-gray-200 hover:border-zinc-900 transition-all p-4 rounded-xl shadow-sm">
+    const CardContent = (
+        <div className={`group flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white border border-gray-200 transition-all p-4 rounded-xl shadow-sm ${order.status === 'PENDING' ? 'hover:border-zinc-900 cursor-pointer' : ''}`}>
             <div className="flex items-center gap-4 flex-1">
                 {/* Product Image */}
                 <div
@@ -69,11 +68,17 @@ export function OrderCard({ order }: OrderCardProps) {
                 <div className={`flex items-center justify-center rounded-full border px-3 py-1 ${getStatusStyle(order.status)}`}>
                     <span className="text-xs font-bold uppercase tracking-wider">{order.status}</span>
                 </div>
-                {/* For future detail page */}
-                {/* <Link href={`/profil/pesanan/${order.id}`} className="sm:hidden text-zinc-900">
-                    <ChevronRight size={20} />
-                </Link> */}
             </div>
         </div>
     );
+
+    if (order.status === "PENDING") {
+        return (
+            <Link href={`/pembayaran/${order.id}`} className="block">
+                {CardContent}
+            </Link>
+        );
+    }
+
+    return CardContent;
 }
