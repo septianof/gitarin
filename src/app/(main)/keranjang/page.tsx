@@ -231,8 +231,10 @@ export default function KeranjangPage() {
             areaName: selectedArea?.name || areaQuery,
             postalCode: shippingForm.postalCode,
             addressDetail: shippingForm.addressDetail,
-            courier: selectedRate.courier_name,
-            service: selectedRate.courier_service_name,
+            courierCompany: selectedRate.company,           // e.g., "jne"
+            courierName: selectedRate.courier_name,         // e.g., "JNE"
+            courierType: selectedRate.courier_service_code, // e.g., "reg"
+            service: selectedRate.courier_service_name,     // e.g., "Regular"
             shippingCost: selectedRate.price,
         });
 

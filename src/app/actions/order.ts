@@ -13,8 +13,10 @@ interface CreateOrderData {
     areaName: string;
     postalCode: string;
     addressDetail: string;
-    courier: string;
-    service: string;
+    courierCompany: string;  // e.g., "jne"
+    courierName: string;     // e.g., "JNE"
+    courierType: string;     // e.g., "reg"
+    service: string;         // e.g., "Regular"
     shippingCost: number;
 }
 
@@ -63,11 +65,13 @@ export async function createOrder(data: CreateOrderData) {
                     orderId: newOrder.id,
                     recipientName: data.recipientName,
                     recipientPhone: data.recipientPhone,
-                    addressCity: data.areaName, // Store Area Name here
+                    destinationAreaId: data.areaId,    // Biteship Area ID
+                    addressCity: data.areaName,
                     addressDetail: data.addressDetail,
                     postalCode: data.postalCode,
-                    courier: data.courier,
-                    service: data.service,
+                    courier: data.courierCompany,      // e.g., "jne"
+                    courierType: data.courierType,     // e.g., "reg"
+                    service: data.service,             // e.g., "Regular"
                     cost: data.shippingCost,
                     status: "PENDING",
                 },

@@ -88,38 +88,40 @@ export async function searchAreas(query: string): Promise<BiteshipArea[]> {
 
 export interface ShippingItem {
     name: string;
+    description?: string;
     value: number;
     quantity: number;
     weight: number; // in grams
 }
 
-// ... existing code ...
-
+// Biteship Create Order Payload (sesuai dokumentasi resmi)
 export interface CreateOrderPayload {
-    origin: {
-        area_id: string;
-        address: string;
-        postal_code: number;
-    };
-    destination: {
-        area_id: string;
-        address: string;
-        postal_code: number;
-    };
-    shipper: {
-        name: string;
-        phone: string;
-    };
-    consignee: {
-        name: string;
-        phone: string;
-    };
-    courier: {
-        company: string; // e.g., "jne"
-        type: string;    // e.g., "reg"
-    };
+    // Origin (Shipper/Warehouse)
+    origin_contact_name: string;
+    origin_contact_phone: string;
+    origin_address: string;
+    origin_postal_code: number;
+    origin_area_id?: string;
+    
+    // Destination (Customer)
+    destination_contact_name: string;
+    destination_contact_phone: string;
+    destination_address: string;
+    destination_postal_code: number;
+    destination_area_id?: string;
+    
+    // Courier
+    courier_company: string; // e.g., "jne"
+    courier_type: string;    // e.g., "reg"
+    
+    // Delivery
+    delivery_type: "now" | "scheduled";
+    
+    // Items
     items: ShippingItem[];
-    note?: string;
+    
+    // Optional
+    order_note?: string;
 }
 
 export interface BiteshipOrderResponse {
@@ -127,8 +129,10 @@ export interface BiteshipOrderResponse {
     id: string;
     waybill_id: string; // Resi
     courier: {
-        tracking_id: string; // Resi
+        tracking_id: string;
         waybill_id: string;
+        company: string;
+        type: string;
     };
     price: number;
     status: string;
@@ -136,6 +140,8 @@ export interface BiteshipOrderResponse {
 
 export async function createShippingOrder(payload: CreateOrderPayload): Promise<BiteshipOrderResponse | null> {
     try {
+        console.log("Biteship Create Order Payload:", JSON.stringify(payload, null, 2));
+        
         const response = await fetch(`${BITESHIP_BASE_URL}/orders`, {
             method: "POST",
             headers: {
@@ -146,6 +152,7 @@ export async function createShippingOrder(payload: CreateOrderPayload): Promise<
         });
 
         const data = await response.json();
+        console.log("Biteship Create Order Response:", JSON.stringify(data, null, 2));
 
         if (!data.success) {
             console.error("Biteship Create Order Error:", JSON.stringify(data));
@@ -155,7 +162,7 @@ export async function createShippingOrder(payload: CreateOrderPayload): Promise<
         return {
             success: true,
             id: data.id,
-            waybill_id: data.courier?.waybill_id || data.courier?.tracking_id, // Normalize Resi
+            waybill_id: data.courier?.waybill_id || data.courier?.tracking_id || "",
             courier: data.courier,
             price: data.price,
             status: data.status

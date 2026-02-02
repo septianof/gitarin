@@ -140,18 +140,21 @@ model OrderItem {
 }
 
 model Shipment {
-  id             String  @id @default(uuid()) @db.Uuid
-  orderId        String  @unique @db.Uuid
-  recipientName  String
-  recipientPhone String
-  addressCity    String
-  addressDetail  String  @db.Text
-  postalCode     String
-  courier        String
-  service        String
-  cost           Decimal @db.Decimal(10, 2)
-  resi           String?
-  status         String
+  id                String  @id @default(uuid()) @db.Uuid
+  orderId           String  @unique @db.Uuid
+  recipientName     String
+  recipientPhone    String
+  destinationAreaId String? // Biteship Area ID untuk destination
+  addressCity       String
+  addressDetail     String  @db.Text
+  postalCode        String
+  courier           String
+  courierType       String? // Courier service type (e.g., "reg", "oke")
+  service           String
+  cost              Decimal @db.Decimal(10, 2)
+  biteshipOrderId   String? // Biteship Order ID setelah create order
+  resi              String? // Waybill/Tracking ID (nomor resi)
+  status            String
 
   // Relations
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
