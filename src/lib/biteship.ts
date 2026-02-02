@@ -138,6 +138,35 @@ export interface BiteshipOrderResponse {
     status: string;
 }
 
+export interface BiteshipTrackingHistory {
+    note: string;
+    status: string;
+    updated_at: string;
+}
+
+export interface BiteshipOrderDetail {
+    success: boolean;
+    id: string;
+    status: string;
+    courier: {
+        company: string;
+        type: string;
+        tracking_id: string;
+        waybill_id: string;
+    };
+    origin: {
+        contact_name: string;
+        contact_phone: string;
+        address: string;
+    };
+    destination: {
+        contact_name: string;
+        contact_phone: string;
+        address: string;
+    };
+    history: BiteshipTrackingHistory[];
+}
+
 export async function createShippingOrder(payload: CreateOrderPayload): Promise<BiteshipOrderResponse | null> {
     try {
         console.log("Biteship Create Order Payload:", JSON.stringify(payload, null, 2));
@@ -169,6 +198,38 @@ export async function createShippingOrder(payload: CreateOrderPayload): Promise<
         };
     } catch (error) {
         console.error("Failed to create shipping order:", error);
+        return null;
+    }
+}
+
+// Get order detail from Biteship (for tracking)
+export async function getOrderDetail(biteshipOrderId: string): Promise<BiteshipOrderDetail | null> {
+    try {
+        const response = await fetch(`${BITESHIP_BASE_URL}/orders/${biteshipOrderId}`, {
+            headers: {
+                Authorization: BITESHIP_API_KEY,
+            },
+        });
+
+        const data = await response.json();
+        console.log("Biteship Get Order Response:", JSON.stringify(data, null, 2));
+
+        if (!data.success) {
+            console.error("Biteship Get Order Error:", JSON.stringify(data));
+            return null;
+        }
+
+        return {
+            success: true,
+            id: data.id,
+            status: data.status,
+            courier: data.courier,
+            origin: data.origin,
+            destination: data.destination,
+            history: data.history || []
+        };
+    } catch (error) {
+        console.error("Failed to get order detail:", error);
         return null;
     }
 }

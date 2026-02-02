@@ -1,16 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { SerializedOrder } from "@/types";
 import { formatCurrency } from "@/lib/utils";
-import { Package, Truck, CheckCircle, MapPin, Phone, User as UserIcon, ChevronLeft } from "lucide-react";
+import { Package, Truck, CheckCircle, MapPin, Phone, User as UserIcon, ChevronLeft, PackageCheck, Loader2 } from "lucide-react";
 import { OrderStatus } from "@prisma/client";
+import { markOrderAsCompleted } from "@/app/actions/order";
 
 interface OrderDetailProps {
     order: SerializedOrder;
 }
 
 export function OrderDetail({ order }: OrderDetailProps) {
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false);
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
     const date = new Date(order.createdAt).toLocaleDateString("id-ID", {
         day: "numeric",
         month: "short",
@@ -30,8 +37,67 @@ export function OrderDetail({ order }: OrderDetailProps) {
 
     const currentStep = getStatusStep(order.status);
 
+    const handleMarkAsCompleted = async () => {
+        setIsLoading(true);
+        try {
+            const result = await markOrderAsCompleted(order.id);
+            if (result.success) {
+                router.refresh();
+                setShowConfirmDialog(false);
+            } else {
+                alert(result.error || "Gagal mengubah status pesanan");
+            }
+        } catch (error) {
+            alert("Terjadi kesalahan");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="flex flex-col gap-8">
+            {/* Confirmation Dialog */}
+            {showConfirmDialog && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+                        <div className="flex flex-col items-center text-center gap-4">
+                            <div className="size-16 bg-emerald-100 rounded-full flex items-center justify-center">
+                                <PackageCheck size={32} className="text-emerald-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-zinc-900 mb-2">Konfirmasi Pesanan Diterima</h3>
+                                <p className="text-gray-500 text-sm">
+                                    Apakah Anda yakin telah menerima pesanan ini? Status pesanan akan diubah menjadi <span className="font-bold">Selesai</span>.
+                                </p>
+                            </div>
+                            <div className="flex gap-3 w-full mt-2">
+                                <button
+                                    onClick={() => setShowConfirmDialog(false)}
+                                    disabled={isLoading}
+                                    className="flex-1 px-4 py-3 border border-gray-200 text-zinc-900 rounded-xl font-medium hover:bg-gray-50 transition-all disabled:opacity-50"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    onClick={handleMarkAsCompleted}
+                                    disabled={isLoading}
+                                    className="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {isLoading ? (
+                                        <>
+                                            <Loader2 size={18} className="animate-spin" />
+                                            Memproses...
+                                        </>
+                                    ) : (
+                                        "Ya, Pesanan Diterima"
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <Link href="/profil/pesanan" className="flex items-center gap-2 text-gray-500 hover:text-zinc-900 transition-colors w-fit">
                 <ChevronLeft size={20} />
                 <span className="text-sm font-medium">Kembali</span>
@@ -121,10 +187,34 @@ export function OrderDetail({ order }: OrderDetailProps) {
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <p className="text-[#647587] text-xs font-bold uppercase tracking-wider mb-1">No. Resi</p>
-                                    <p className="text-[#111417] text-sm font-mono bg-[#f0f2f4] inline-block px-2 py-1 rounded w-fit select-all">-</p>
-                                    <p className="text-[#647587] text-xs mt-1 italic">Resi belum tersedia</p>
+                                    {order.shipment.resi ? (
+                                        <p className="text-[#111417] text-sm font-mono bg-[#f0f2f4] inline-block px-2 py-1 rounded w-fit select-all">
+                                            {order.shipment.resi}
+                                        </p>
+                                    ) : (
+                                        <>
+                                            <p className="text-[#111417] text-sm font-mono bg-[#f0f2f4] inline-block px-2 py-1 rounded w-fit select-all">-</p>
+                                            <p className="text-[#647587] text-xs mt-1 italic">Resi belum tersedia</p>
+                                        </>
+                                    )}
                                 </div>
                             </div>
+
+                            {/* Tombol Pesanan Diterima - hanya tampil saat status DIKIRIM */}
+                            {order.status === "DIKIRIM" && (
+                                <div className="mt-6 pt-6 border-t border-[#f0f2f4]">
+                                    <button
+                                        onClick={() => setShowConfirmDialog(true)}
+                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20"
+                                    >
+                                        <PackageCheck size={20} />
+                                        Pesanan Diterima
+                                    </button>
+                                    <p className="text-center text-[#647587] text-xs mt-2">
+                                        Klik tombol di atas jika pesanan sudah sampai
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

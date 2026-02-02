@@ -189,3 +189,48 @@ export async function getUserOrders(status?: string) {
         return { success: false, error: "Gagal mengambil data pesanan" };
     }
 }
+
+// Customer marks order as received/completed
+export async function markOrderAsCompleted(orderId: string) {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        // Verify order belongs to user and is in DIKIRIM status
+        const order = await prisma.order.findUnique({
+            where: { id: orderId },
+            include: { shipment: true }
+        });
+
+        if (!order) {
+            return { success: false, error: "Pesanan tidak ditemukan" };
+        }
+
+        if (order.userId !== session.user.id) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        if (order.status !== "DIKIRIM") {
+            return { success: false, error: "Pesanan tidak dalam status pengiriman" };
+        }
+
+        // Update order status to SELESAI
+        await prisma.$transaction([
+            prisma.order.update({
+                where: { id: orderId },
+                data: { status: "SELESAI" }
+            }),
+            prisma.shipment.update({
+                where: { orderId: orderId },
+                data: { status: "DELIVERED" }
+            })
+        ]);
+
+        return { success: true };
+    } catch (error) {
+        console.error("Mark order completed error:", error);
+        return { success: false, error: "Gagal mengubah status pesanan" };
+    }
+}

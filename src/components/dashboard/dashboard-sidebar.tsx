@@ -34,7 +34,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
     const GUDANG_LINKS = [
         { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
         { label: "Daftar Antrean", href: "/dashboard/antrean", icon: ListTodo },
-        { label: "Riwayat Pengiriman", href: "/dashboard/riwayat", icon: History },
+        { label: "Riwayat Pengiriman", href: "/dashboard/riwayat-pengiriman", icon: History },
     ];
 
     const ADMIN_LINKS = [
