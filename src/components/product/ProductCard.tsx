@@ -17,8 +17,10 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
     const router = useRouter();
-    const { status } = useSession();
+    const { data: session, status } = useSession();
     const [isLoading, setIsLoading] = useState(false);
+
+    const isStaff = session?.user?.role === "ADMIN" || session?.user?.role === "GUDANG";
 
     const handleAddToCart = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -78,18 +80,20 @@ export function ProductCard({ product }: ProductCardProps) {
                         </p>
                     </div>
 
-                    <Button
-                        size="icon"
-                        onClick={handleAddToCart}
-                        disabled={isLoading || product.stock <= 0}
-                        className="rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white shadow-lg shadow-zinc-900/10 transition-colors disabled:opacity-50"
-                    >
-                        {isLoading ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                            <ShoppingCart className="w-5 h-5" />
-                        )}
-                    </Button>
+                    {!isStaff && (
+                        <Button
+                            size="icon"
+                            onClick={handleAddToCart}
+                            disabled={isLoading || product.stock <= 0}
+                            className="rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white shadow-lg shadow-zinc-900/10 transition-colors disabled:opacity-50"
+                        >
+                            {isLoading ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <ShoppingCart className="w-5 h-5" />
+                            )}
+                        </Button>
+                    )}
                 </div>
             </div>
         </div>

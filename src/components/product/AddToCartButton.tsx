@@ -22,8 +22,13 @@ export function AddToCartButton({
     className = "",
 }: AddToCartButtonProps) {
     const router = useRouter();
-    const { status } = useSession();
+    const { data: session, status } = useSession();
     const [isLoading, setIsLoading] = useState(false);
+
+    // Hide for Admin/Gudang
+    if (session?.user?.role === "ADMIN" || session?.user?.role === "GUDANG") {
+        return null;
+    }
 
     const handleAddToCart = async () => {
         if (status === "unauthenticated") {

@@ -28,7 +28,10 @@ declare module "@auth/core/jwt" {
     }
 }
 
+import { authConfig } from "./auth.config";
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
+    ...authConfig,
     providers: [
         Credentials({
             name: "credentials",
@@ -72,35 +75,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             },
         }),
     ],
-    callbacks: {
-        async jwt({ token, user, trigger, session }) {
-            if (user) {
-                token.id = user.id as string;
-                token.role = user.role;
-                token.photo = user.photo;
-            }
-            // Support updating session from client
-            if (trigger === "update" && session) {
-                if (session.name) token.name = session.name;
-                if (session.photo) token.photo = session.photo;
-            }
-            return token;
-        },
-        async session({ session, token }) {
-            if (token) {
-                session.user.id = token.id;
-                session.user.role = token.role;
-                session.user.photo = token.photo;
-            }
-            return session;
-        },
-    },
-    pages: {
-        signIn: "/login",
-    },
-    session: {
-        strategy: "jwt",
-    },
 });
 
 // Helper function to get redirect URL based on role
