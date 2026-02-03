@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Edit, Trash2, Loader2, ChevronLeft, ChevronRight, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UploadedImage } from "@/components/ui/uploaded-image";
 import { ProductFormModal } from "./ProductFormModal";
 import { deleteProduct } from "@/app/actions/product";
 
@@ -130,18 +130,17 @@ export function ProductTable({ products, categories, pagination }: ProductTableP
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-4">
                                         <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                                            {product.image ? (
-                                                <Image
-                                                    src={product.image}
-                                                    alt={product.name}
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center">
-                                                    <Package className="h-6 w-6 text-gray-400" />
-                                                </div>
-                                            )}
+                                            <UploadedImage
+                                                src={product.image}
+                                                alt={product.name}
+                                                fill
+                                                className="object-cover"
+                                                fallback={
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <Package className="h-6 w-6 text-gray-400" />
+                                                    </div>
+                                                }
+                                            />
                                         </div>
                                         <div className="min-w-0">
                                             <p className="font-medium text-gray-900 truncate max-w-[200px]">

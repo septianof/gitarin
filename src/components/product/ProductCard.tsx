@@ -4,11 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import Image from "next/image";
 import { ShoppingCart, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ProductWithCategory } from "@/app/actions/products";
 import { Button } from "@/components/ui/button";
+import { UploadedImage } from "@/components/ui/uploaded-image";
 import { addToCart } from "@/app/actions/cart";
 
 interface ProductCardProps {
@@ -54,7 +54,7 @@ export function ProductCard({ product }: ProductCardProps) {
     return (
         <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 overflow-hidden transition-all duration-300 flex flex-col h-full hover:-translate-y-1">
             <Link href={`/produk/${product.slug}`} className="relative aspect-[4/5] overflow-hidden bg-gray-100 flex items-center justify-center p-4">
-                <Image
+                <UploadedImage
                     src={product.image}
                     alt={product.name}
                     fill

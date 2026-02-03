@@ -1,7 +1,7 @@
 import { formatCurrency } from "@/lib/utils";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { UploadedImage } from "@/components/ui/uploaded-image";
 
 interface ProductStat {
     id: string;
@@ -38,7 +38,7 @@ export function TopProducts({ products }: { products: ProductStat[] }) {
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-4">
                                         <div className="relative size-10 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shrink-0">
-                                            <Image
+                                            <UploadedImage
                                                 src={product.image}
                                                 alt={product.name}
                                                 fill

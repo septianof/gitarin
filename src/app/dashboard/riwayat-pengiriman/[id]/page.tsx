@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { ArrowLeft, Package, Truck, User, Printer, MapPin } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
+import { UploadedImage } from "@/components/ui/uploaded-image";
 
 export const metadata = {
     title: "Detail Pengiriman - Gitarin Gudang",
@@ -160,7 +160,7 @@ export default async function RiwayatDetailPage({ params }: { params: Promise<{ 
                             {order.items.map((item) => (
                                 <div key={item.id} className="p-6 flex gap-4">
                                     <div className="relative size-20 rounded-lg overflow-hidden bg-gray-100 shrink-0 border border-gray-100">
-                                        <Image
+                                        <UploadedImage
                                             src={item.product.image || "/placeholder.jpg"}
                                             alt={item.product.name}
                                             fill

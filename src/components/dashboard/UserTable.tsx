@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Edit, Trash2, Loader2, ChevronLeft, ChevronRight, Users, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UploadedImage } from "@/components/ui/uploaded-image";
 import { UserFormModal } from "./UserFormModal";
 import { deleteUser } from "@/app/actions/users";
 
@@ -141,18 +141,17 @@ export function UserTable({ users, roles, pagination, currentUserId }: UserTable
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
                                         <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-100 shrink-0">
-                                            {user.photo ? (
-                                                <Image
-                                                    src={user.photo}
-                                                    alt={user.name || "User"}
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-amber-100 text-amber-600">
-                                                    <User className="h-5 w-5" />
-                                                </div>
-                                            )}
+                                            <UploadedImage
+                                                src={user.photo}
+                                                alt={user.name || "User"}
+                                                fill
+                                                className="object-cover"
+                                                fallback={
+                                                    <div className="w-full h-full flex items-center justify-center bg-amber-100 text-amber-600">
+                                                        <User className="h-5 w-5" />
+                                                    </div>
+                                                }
+                                            />
                                         </div>
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2">

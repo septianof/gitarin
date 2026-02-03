@@ -2,11 +2,11 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2, ShoppingBag, ShieldCheck, Clock, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UploadedImage } from "@/components/ui/uploaded-image";
 
 interface Order {
     id: string;
@@ -241,7 +241,7 @@ export default function PaymentView({ order, midtransClientKey }: { order: Order
                         {order.items.map((item) => (
                             <div key={item.id} className="flex gap-3 pb-4 border-b border-gray-100 last:border-0">
                                 <div className="h-16 w-16 bg-gray-100 rounded-md overflow-hidden shrink-0 relative">
-                                    <Image
+                                    <UploadedImage
                                         src={item.product.image}
                                         alt={item.product.name}
                                         fill

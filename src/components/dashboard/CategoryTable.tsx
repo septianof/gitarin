@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Pencil, Trash2, ImageIcon } from "lucide-react";
+import { UploadedImage } from "@/components/ui/uploaded-image";
 import { deleteCategory } from "@/app/actions/category";
 import { CategoryFormModal } from "./CategoryFormModal";
 import { toast } from "sonner";
@@ -71,20 +71,18 @@ export function CategoryTable({ categories }: CategoryTableProps) {
                             <tr key={category.id} className="hover:bg-gray-50 transition-colors duration-200">
                                 <td className="px-6 py-4 text-gray-500">{index + 1}</td>
                                 <td className="px-6 py-4">
-                                    <div className="size-12 rounded-lg bg-gray-100 overflow-hidden border border-gray-200">
-                                        {category.image ? (
-                                            <Image
-                                                src={category.image}
-                                                alt={category.name}
-                                                width={48}
-                                                height={48}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <ImageIcon size={20} className="text-gray-400" />
-                                            </div>
-                                        )}
+                                    <div className="size-12 rounded-lg bg-gray-100 overflow-hidden border border-gray-200 relative">
+                                        <UploadedImage
+                                            src={category.image}
+                                            alt={category.name}
+                                            fill
+                                            className="object-cover"
+                                            fallback={
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <ImageIcon size={20} className="text-gray-400" />
+                                                </div>
+                                            }
+                                        />
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 font-medium text-zinc-900">{category.name}</td>

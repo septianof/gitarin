@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Minus, Plus, Trash2, ShoppingBag, Loader2, Lock, ChevronDown, MapPin, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { UploadedImage } from "@/components/ui/uploaded-image";
 import { getCart, updateCartItem, removeCartItem } from "@/app/actions/cart";
 import { createOrder } from "@/app/actions/order";
 import { BiteshipArea, BiteshipRate } from "@/lib/biteship";
@@ -305,7 +305,7 @@ export default function KeranjangPage() {
                             >
                                 {/* Product Image */}
                                 <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-gray-100">
-                                    <Image
+                                    <UploadedImage
                                         src={item.product.image}
                                         alt={item.product.name}
                                         fill

@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, ShoppingCart, Truck, CheckCircle, Headphones, Music } from "lucide-react";
 import { ProductCard } from "@/components/product/ProductCard";
+import { UploadedImage } from "@/components/ui/uploaded-image";
 import { getPopularCategories, getFeaturedProducts } from "@/app/actions/landing-page";
 
 export default async function Home() {
@@ -72,19 +73,17 @@ export default async function Home() {
             {popularCategories.map((category) => (
               <Link href={`/produk?categoryId=${category.id}`} key={category.id}>
                 <div className="relative group rounded-xl overflow-hidden h-64 shadow-md cursor-pointer">
-                  {category.image ? (
-                    <Image
-                      src={category.image}
-                      alt={category.name}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                  ) : (
-                    // Fallback using random gradient if no image
-                    <div className="w-full h-full bg-zinc-200 flex items-center justify-center">
-                      <Music className="w-12 h-12 text-zinc-400" />
-                    </div>
-                  )}
+                  <UploadedImage
+                    src={category.image}
+                    alt={category.name}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    fallback={
+                      <div className="w-full h-full bg-zinc-200 flex items-center justify-center">
+                        <Music className="w-12 h-12 text-zinc-400" />
+                      </div>
+                    }
+                  />
 
                   <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors"></div>
                   <div className="absolute bottom-6 left-6 text-white">
