@@ -137,7 +137,7 @@ export function UserTable({ users, roles, pagination, currentUserId }: UserTable
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                         {users.map((user) => (
-                            <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                            <tr key={user.id} className="hover:bg-gray-50 transition-colors duration-200">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
                                         <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-100 shrink-0">

@@ -60,7 +60,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="w-full max-w-[480px] mx-auto flex flex-col gap-8">
+        <div className="w-full max-w-[480px] mx-auto flex flex-col gap-8 animate-fade-in">
             {/* Back to Home */}
             <Link
                 href="/"

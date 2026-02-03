@@ -126,7 +126,7 @@ export function ProductTable({ products, categories, pagination }: ProductTableP
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                         {products.map((product) => (
-                            <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                            <tr key={product.id} className="hover:bg-gray-50 transition-colors duration-200">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-4">
                                         <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">

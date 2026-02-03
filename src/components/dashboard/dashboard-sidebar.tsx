@@ -80,12 +80,12 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${isActive
+                                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
                                     ? "bg-[#111417] text-white shadow-sm"
-                                    : "text-gray-500 hover:bg-gray-200 hover:text-zinc-900"
+                                    : "text-gray-500 hover:bg-gray-200 hover:text-zinc-900 hover:translate-x-1"
                                     }`}
                             >
-                                <Icon size={18} />
+                                <Icon size={18} className="transition-transform duration-200" />
                                 {link.label}
                             </Link>
                         );
@@ -95,7 +95,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
                 <div className="mt-auto">
                     <button
                         onClick={() => signOut({ callbackUrl: "/login" })}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all text-left"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all duration-200 text-left hover:translate-x-1"
                     >
                         <LogOut size={18} />
                         Keluar

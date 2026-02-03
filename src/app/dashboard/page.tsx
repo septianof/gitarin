@@ -48,7 +48,7 @@ async function GudangDashboard() {
     }));
 
     return (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-8 animate-fade-in">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex flex-col gap-1">
                     <h1 className="text-2xl font-bold text-zinc-900">Dashboard Utama</h1>
@@ -118,7 +118,7 @@ async function AdminDashboard() {
     }));
 
     return (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-8 animate-fade-in">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex flex-col gap-1">
                     <h1 className="text-2xl font-bold text-zinc-900">Dashboard Admin</h1>

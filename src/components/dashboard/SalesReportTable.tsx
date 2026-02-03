@@ -116,7 +116,7 @@ export function SalesReportTable({ orders, pagination }: SalesReportTableProps) 
                             const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
                             
                             return (
-                                <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                                <tr key={order.id} className="hover:bg-gray-50 transition-colors duration-200">
                                     <td className="px-6 py-4">
                                         <span className="font-mono text-sm text-gray-900">
                                             {order.id.substring(0, 8)}...

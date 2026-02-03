@@ -68,7 +68,7 @@ export function CategoryTable({ categories }: CategoryTableProps) {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {categories.map((category, index) => (
-                            <tr key={category.id} className="hover:bg-gray-50 transition-colors">
+                            <tr key={category.id} className="hover:bg-gray-50 transition-colors duration-200">
                                 <td className="px-6 py-4 text-gray-500">{index + 1}</td>
                                 <td className="px-6 py-4">
                                     <div className="size-12 rounded-lg bg-gray-100 overflow-hidden border border-gray-200">

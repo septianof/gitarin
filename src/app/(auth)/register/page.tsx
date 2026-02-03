@@ -45,7 +45,7 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="w-full max-w-[480px] mx-auto flex flex-col gap-8">
+        <div className="w-full max-w-[480px] mx-auto flex flex-col gap-8 animate-fade-in">
             {/* Mobile Logo */}
             <div className="lg:hidden flex items-center gap-3">
                 <div className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-900 text-white">

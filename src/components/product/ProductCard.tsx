@@ -52,13 +52,13 @@ export function ProductCard({ product }: ProductCardProps) {
     };
 
     return (
-        <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 overflow-hidden transition-all duration-300 flex flex-col h-full">
+        <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 overflow-hidden transition-all duration-300 flex flex-col h-full hover:-translate-y-1">
             <Link href={`/produk/${product.slug}`} className="relative aspect-[4/5] overflow-hidden bg-gray-100 flex items-center justify-center p-4">
                 <Image
                     src={product.image}
                     alt={product.name}
                     fill
-                    className="object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
+                    className="object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
                 />
             </Link>
 

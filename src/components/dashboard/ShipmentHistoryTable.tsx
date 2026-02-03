@@ -56,7 +56,7 @@ export function ShipmentHistoryTable({ data }: { data: ShipmentItem[] }) {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                     {data.map((item) => (
-                        <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                        <tr key={item.id} className="hover:bg-gray-50 transition-colors duration-200">
                             <td className="px-4 py-4 font-bold text-zinc-900 whitespace-nowrap">
                                 {item.orderId}
                             </td>
