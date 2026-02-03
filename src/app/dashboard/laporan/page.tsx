@@ -53,7 +53,7 @@ export default async function LaporanPenjualanPage({ searchParams }: PageProps) 
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <SalesReportTable 
                     orders={orders || []} 
-                    pagination={pagination}
+                    pagination={pagination || null}
                 />
             </div>
         </div>

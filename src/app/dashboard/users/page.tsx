@@ -57,7 +57,7 @@ export default async function KelolaUsersPage({ searchParams }: PageProps) {
                 <UserTable 
                     users={users || []} 
                     roles={roles || []}
-                    pagination={pagination}
+                    pagination={pagination || null}
                     currentUserId={session.user.id}
                 />
             </div>

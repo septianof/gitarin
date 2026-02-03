@@ -57,7 +57,7 @@ export default async function KelolaProdukPage({ searchParams }: PageProps) {
                 <ProductTable 
                     products={products || []} 
                     categories={categories || []}
-                    pagination={pagination}
+                    pagination={pagination || null}
                 />
             </div>
         </div>

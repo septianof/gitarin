@@ -63,7 +63,7 @@ export function ProductTable({ products, categories, pagination }: ProductTableP
         setIsEditModalOpen(true);
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         if (!confirm("Apakah Anda yakin ingin menghapus produk ini?")) {
             return;
         }

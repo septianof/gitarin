@@ -3,9 +3,10 @@
 import { DollarSign, Package, Truck, TrendingUp } from "lucide-react";
 
 interface TopProduct {
-    productId: string;
-    productName: string;
-    totalSold: number;
+    id: string;
+    name: string;
+    quantity: number;
+    revenue: number;
 }
 
 interface SalesReportSummaryProps {
@@ -89,7 +90,7 @@ export function SalesReportSummary({ summary, topProducts }: SalesReportSummaryP
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                         {topProducts.map((product, index) => (
                             <div 
-                                key={product.productId} 
+                                key={product.id} 
                                 className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
                             >
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
@@ -102,10 +103,10 @@ export function SalesReportSummary({ summary, topProducts }: SalesReportSummaryP
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <p className="text-sm font-medium text-gray-900 truncate">
-                                        {product.productName}
+                                        {product.name}
                                     </p>
                                     <p className="text-xs text-gray-500">
-                                        {product.totalSold} terjual
+                                        {product.quantity} terjual
                                     </p>
                                 </div>
                             </div>
